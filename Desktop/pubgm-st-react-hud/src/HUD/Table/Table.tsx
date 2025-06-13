@@ -20,7 +20,7 @@ import {
 import io from 'socket.io-client';
 import {teamPoints} from "../../../interfaces";
 
-const socket = io('${process.env.REACT_APP_API_URL}');
+const socket = io(process.env.REACT_APP_SOCKET_URL!);
 
 
 

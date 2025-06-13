@@ -39,7 +39,7 @@ export async  function handleKeyDown(event: React.KeyboardEvent<HTMLSpanElement>
         const teamPoints = span?.textContent || '0';
 
         try {
-            await axios.post('${process.env.REACT_APP_API_URL}api/update_points', {
+            await axios.post(`${process.env.REACT_APP_API_URL}/api/update_points`, {
                 data: {
                     team_id: parseInt(teamID), team_points: parseInt(teamPoints)
                 }
@@ -120,7 +120,7 @@ export async function resetPoints(event: React.FormEvent<HTMLButtonElement>) {
 
 
     try {
-        await axios.post('${process.env.REACT_APP_API_URL}/api/reset_points', {
+        await axios.post(`${process.env.REACT_APP_API_URL}/api/reset_points`, {
             data: {
                 team_id: parseInt(teamID), team_points: 0
             }
@@ -135,7 +135,7 @@ export async function resetElims(event: React.FormEvent<HTMLButtonElement>) {
     const teamID = button.parentElement?.parentElement?.parentElement?.querySelector('.control-team-name .team-name')?.id.match(/\d+/)?.[0] || '0';
 
     try {
-        await axios.post('${process.env.REACT_APP_API_URL}/api/reset_elims', {
+        await axios.post(`${process.env.REACT_APP_API_URL}/api/reset_elims`, {
             data: {
                 team_id: parseInt(teamID), team_points: -2
             }
@@ -174,13 +174,13 @@ export async function teamEliminated(event: React.FormEvent<HTMLButtonElement>) 
     eliminateMessage.style.display = 'flex';
 
     try {
-        const response = await axios.post('${process.env.REACT_APP_API_URL}/api/team_eliminated', {
+        const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/team_eliminated`, {
             data: {
                 team_id: parseInt(teamID), team_name: teamNameSpan?.textContent
             }
         })
         if (response.status === 200) {
-            await axios.post('${process.env.REACT_APP_API_URL}/api/players_update', {
+            await axios.post(`${process.env.REACT_APP_API_URL}/api/players_update`, {
                 data: {
                     team_id: parseInt(teamID), team_name: teamNameSpan?.textContent, team_eliminated: true
                 }
@@ -191,7 +191,7 @@ export async function teamEliminated(event: React.FormEvent<HTMLButtonElement>) 
         for (let i = 0; i < responseData.length; i++) {
             if (responseData[i]) {
                 try {
-                    await axios.post('${process.env.REACT_APP_API_URL}/api/team_eliminated_sc', {
+                    await axios.post(`${process.env.REACT_APP_API_URL}/api/team_eliminated_sc`, {
                         data: {
                             team_name: responseData[i].team_name, team_logo_data: responseData[i].team_logo_data
                         }
@@ -234,13 +234,13 @@ export async function teamEliminatedHidden(event: React.FormEvent<HTMLButtonElem
     eliminateMessage.style.display = 'flex';
 
     try {
-        const response = await axios.post('${process.env.REACT_APP_API_URL}/api/team_eliminated', {
+        const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/team_eliminated`, {
             data: {
                 team_id: parseInt(teamID), team_name: teamNameSpan?.textContent
             }
         })
         if (response.status === 200) {
-            await axios.post('${process.env.REACT_APP_API_URL}/api/players_update', {
+            await axios.post(`${process.env.REACT_APP_API_URL}/api/players_update`, {
                 data: {
                     team_id: parseInt(teamID), team_name: teamNameSpan?.textContent, team_eliminated: true
                 }
@@ -251,7 +251,7 @@ export async function teamEliminatedHidden(event: React.FormEvent<HTMLButtonElem
         for (let i = 0; i < responseData.length; i++) {
             if (responseData[i]) {
                 try {
-                    await axios.post('${process.env.REACT_APP_API_URL}/api/team_eliminated_sc', {
+                    await axios.post(`${process.env.REACT_APP_API_URL}/api/team_eliminated_sc`, {
                         data: {
                             team_name: responseData[i].team_name, team_logo_data: responseData[i].team_logo_data
                         }
@@ -298,7 +298,7 @@ export async function playersAlive4(event: React.FormEvent<HTMLButtonElement>) {
     }
 
     try {
-        await axios.post('${process.env.REACT_APP_API_URL}/api/players_update', {
+        await axios.post(`${process.env.REACT_APP_API_URL}/api/players_update`, {
             data: {
                 team_id: parseInt(teamID), players_alive: 4
             }
@@ -340,7 +340,7 @@ export async function playersAlive4Hidden(event: React.FormEvent<HTMLButtonEleme
     }
 
     try {
-        await axios.post('${process.env.REACT_APP_API_URL}/api/players_update', {
+        await axios.post(`${process.env.REACT_APP_API_URL}/api/players_update`, {
             data: {
                 team_id: parseInt(teamID), players_alive: 4
             }
@@ -357,7 +357,7 @@ export async function knockedPlayer(event: React.FormEvent<HTMLButtonElement>) {
     const knockedPlayers = button.id.match(/\d+/)?.[0] || '0';
 
     try {
-        await axios.post('${process.env.REACT_APP_API_URL}/api/players_update', {
+        await axios.post(`${process.env.REACT_APP_API_URL}/api/players_update`, {
             data: {
                 team_id: parseInt(teamID), team_name: teamNameSpan?.textContent, players_knocked: parseInt(knockedPlayers)
             }
@@ -374,7 +374,7 @@ export async function knockedPlayerHidden(event: React.FormEvent<HTMLButtonEleme
     const knockedPlayers = button.id.match(/\d+/)?.[0] || '0';
 
     try {
-        await axios.post('${process.env.REACT_APP_API_URL}/api/players_update', {
+        await axios.post(`${process.env.REACT_APP_API_URL}/api/players_update`, {
             data: {
                 team_id: parseInt(teamID), team_name: teamNameSpan?.textContent, players_knocked: parseInt(knockedPlayers)
             }
@@ -391,7 +391,7 @@ export async function eliminatedPlayer(event: React.FormEvent<HTMLButtonElement>
     const eliminatedPlayers = button.id.match(/\d+/)?.[0] || '0';
 
     try {
-        await axios.post('${process.env.REACT_APP_API_URL}/api/players_update', {
+        await axios.post(`${process.env.REACT_APP_API_URL}/api/players_update`, {
             data: {
                 team_id: parseInt(teamID), team_name: teamNameSpan?.textContent, players_eliminated: parseInt(eliminatedPlayers)
             }
@@ -408,7 +408,7 @@ export async function eliminatedPlayerHidden(event: React.FormEvent<HTMLButtonEl
     const eliminatedPlayers = button.id.match(/\d+/)?.[0] || '0';
 
     try {
-        await axios.post('${process.env.REACT_APP_API_URL}/api/players_update', {
+        await axios.post(`${process.env.REACT_APP_API_URL}/api/players_update`, {
             data: {
                 team_id: parseInt(teamID), team_name: teamNameSpan?.textContent, players_eliminated: parseInt(eliminatedPlayers)
             }
