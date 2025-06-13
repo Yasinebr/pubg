@@ -38,7 +38,7 @@ function Control() {
     }, []);
 
     const elms = (teamId: number,  side: "increase" | "decrease" | number)=>{
-        axios.post(`http://localhost:3001/api/elms`, {
+        axios.post(`${process.env.REACT_APP_API_URL}/api/elms`, {
             data: {
                 team_id: teamId,
                 points: typeof side === 'number' ? side:side === "increase" ? 1:-1

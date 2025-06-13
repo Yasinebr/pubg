@@ -8,7 +8,7 @@ import './styles.css';
 
 import io from 'socket.io-client';
 
-const socket = io('http://localhost:3003');
+const socket = io('${process.env.REACT_APP_API_URL}');
 
 function ElimBroadcast() {
     const [teamsLength, setTeamsLength] = useState<number>(0);

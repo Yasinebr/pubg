@@ -13,21 +13,26 @@ import http from 'http';
 
 const app = express();
 const port = 3001;
-
 const server = http.createServer(app);
 
+// متغیر اصلی که آدرس مجاز را نگه می‌دارد
+const allowedOrigin = process.env.CORS_ORIGIN || 'http://localhost:3000';
+
+// استفاده در تنظیمات CORS برای Socket.IO (این بخش درست بود)
 const io = new Server(server, {
-    cors: {
-        origin: 'http://localhost:3000',
-        methods: ['GET', 'POST']
-    },
-    path: '/'
+  cors: {
+    origin: allowedOrigin,
+    methods: ['GET', 'POST']
+  },
+  path: '/'
 });
 
 const db = new sqlite3.Database('./database/database.db');
 
-app.use(cors({ origin: 'http://localhost:3000' }));
+// استفاده در تنظیمات CORS برای Express API (این همان خطی است که باید تغییر دهید)
+app.use(cors({ origin: allowedOrigin }));
 app.use(express.json());
+
 
 app.use('/team_logos', express.static(path.join(__dirname, 'team_data/team_logos')));
 
