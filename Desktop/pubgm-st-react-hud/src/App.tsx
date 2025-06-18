@@ -3,6 +3,7 @@ import Home from './HUD/Home';
 import Control from './HUD/Control/Control';
 import Table from './HUD/Table/Table';
 import ElimBroadcast from './HUD/ElimBroadcast/ElimBroacast';
+import { AdminPanel } from './HUD/AdminPanel/AdminPanel';
 
 function App() {
     return (
@@ -13,6 +14,7 @@ function App() {
                     <Route path='/table' element={<Table />} />
                     <Route path='/control' element={<Control />} />
                     <Route path='/broadcast' element={<ElimBroadcast />} />
+                    <Route path="/admin" element={<AdminPanel />} />
                 </Routes>
             </div>
         </Router>

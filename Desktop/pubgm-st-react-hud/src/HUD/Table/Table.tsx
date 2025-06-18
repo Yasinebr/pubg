@@ -20,7 +20,9 @@ import {
 import io from 'socket.io-client';
 import {teamPoints} from "../../../interfaces";
 
-const socket = io(process.env.REACT_APP_SOCKET_URL!);
+const socket = io(process.env.REACT_APP_SOCKET_URL!, {
+  // کلاینت را به همان مسیر سفارشی سرور می‌فرستیم
+});
 
 
 
@@ -36,21 +38,72 @@ function Table() {
 
 
     useEffect(() => {
-        getTeamData().then((data) => {
-            setTeamColor(data[0].team_color);
-            setHeaderColor(data[0].header_color);
-            setTeamData(data);
+        // ۱. تابعی برای گرفتن تمام داده‌های مورد نیاز جدول
+        const fetchTableData = () => {
+            console.log("Fetching initial table data...");
+            getTeamData().then((data) => {
+                // این بخش‌ها از کد خودتان گرفته شده و صحیح است
+                setTeamColor(data[0].team_color);
+                setHeaderColor(data[0].header_color);
+                setTeamData(data);
+            });
+
+            getTeamPoints().then((teamPoints) => {
+                setTeamPointsM(teamPoints);
+                setDynamicData(Object.fromEntries(
+                    teamPoints.map((o: any) => ([
+                        o.team_id - 1,
+                        o
+                    ]))
+                ))
+            });
+        };
+
+        // ۲. در اولین بار که کامپوننت لود می‌شود، داده‌ها را می‌گیریم
+        fetchTableData();
+
+        // ۳. به پیام سرور برای آپدیت شدن نام/لوگو گوش می‌دهیم
+        socket.on('teamDataUpdated', () => {
+            console.log("Received 'teamDataUpdated' event. Refetching data...");
+            // به محض دریافت پیام، داده‌ها را دوباره می‌گیریم
+            fetchTableData();
         });
 
-        getTeamPoints().then((teamPoints) => {
-            setTeamPointsM(teamPoints);
-            setDynamicData(Object.fromEntries(
-                teamPoints.map((o: any) => ([
-                    o.team_id - 1,
-                    o
-                ]))
-            ))
+        // ۴. کدهای قبلی شما برای بقیه آپدیت‌های لحظه‌ای (این‌ها را دست نخورده باقی گذاشتم)
+        socket.on('players_update', (data) => {
+            if (data.players_knocked) {
+                if (data.players_knocked === 1) knockedOneEmit(data.team_id);
+                if (data.players_knocked === 2) knockedTwoEmit(data.team_id);
+                if (data.players_knocked === 3) knockedThreeEmit(data.team_id);
+            }
+            if (data.players_alive) {
+                if (data.players_alive === 4) aliveFourPlayersEmit(data.team_id)
+            }
+            if (data.team_eliminated && !eliminatedTeams.includes(data.team_id)) {
+                teamEliminatedEmit(data.team_id)
+                setEliminatedTeams((prevTeams) => [...prevTeams, data.team_id]);
+            }
+            if (data.players_eliminated) {
+                if (data.players_eliminated === 1) eliminatedOneEmit(data.team_id)
+                if (data.players_eliminated === 2) eliminatedTwoEmit(data.team_id)
+                if (data.players_eliminated === 3) eliminatedThreeEmit(data.team_id)
+            }
         });
+
+        socket.on("dajjal", data => {
+            setDynamicData(data);
+        });
+
+
+        // ۵. تابع پاک‌سازی (Cleanup)
+        // این بخش بسیار مهم است تا وقتی از صفحه خارج می‌شوید، شنونده‌های تکراری ایجاد نشوند
+        return () => {
+            socket.off('teamDataUpdated');
+            socket.off('players_update');
+            socket.off('points-update');
+            socket.off('dajjal');
+        };
+
     }, []);
 
     const teamColorStyle: React.CSSProperties = {
@@ -214,7 +267,7 @@ function Table() {
                                 <img src={`data:image/png;base64, ${team.logo_data}`} alt="" className='team-logo' />
                             </div>
                             <div className='table-inner-element team-name-m'>
-                                <span className='team-name-tb'>{(team.initial).toUpperCase()}</span>
+                                <span className='team-name-tb'>{(team.name).toUpperCase()}</span>
                             </div>
                         </div>
                         <div className='table-inner-element team-stats-side'>

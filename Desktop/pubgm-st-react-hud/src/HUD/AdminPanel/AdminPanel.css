@@ -1,0 +1,100 @@
+/* Main container for the admin panel */
+.admin-panel {
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 20px;
+    color: #e0e0e0; /* A light gray for text */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.admin-panel h1 {
+    text-align: center;
+    margin-bottom: 40px;
+    color: #5dade2; /* A bright, clean blue for the title */
+    font-weight: 300;
+    letter-spacing: 1px;
+}
+
+/* Styling for each team's editing card */
+.team-edit-card {
+    background-color: #1f2c3a; /* Darker, slightly blue background for cards */
+    border: 1px solid #34495e; /* A subtle blue-gray border */
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 25px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px; /* More space between form groups */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: transform 0.2s ease-in-out;
+}
+
+.team-edit-card:hover {
+    transform: translateY(-3px);
+}
+
+.team-edit-card h4 {
+    margin: 0;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #34495e;
+    font-size: 1.25em;
+    color: #ffffff;
+    font-weight: 500;
+}
+
+/* Container for each input and its button */
+.form-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Styling for input fields */
+.admin-panel input[type="text"] {
+    flex-grow: 1; /* Allows the text input to take up available space */
+    font-size: 1em;
+    padding: 10px;
+    background-color: #2c3e50; /* Another shade of dark blue */
+    border: 1px solid #566573;
+    border-radius: 4px;
+    color: #f0f0f0;
+}
+
+.admin-panel input[type="file"] {
+    color: #a0a0a0;
+}
+
+/* Custom styling for the file input button */
+.admin-panel input[type="file"]::file-selector-button {
+    background-color: #566573; /* A neutral gray-blue */
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.admin-panel input[type="file"]::file-selector-button:hover {
+    background-color: #808b96;
+}
+
+/* Styling for buttons */
+.admin-panel button {
+    background-color: #3498db; /* The main bright blue from your theme */
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9em;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.admin-panel button:hover {
+    background-color: #5dade2; /* Lighter blue on hover */
+    transform: scale(1.05);
+}

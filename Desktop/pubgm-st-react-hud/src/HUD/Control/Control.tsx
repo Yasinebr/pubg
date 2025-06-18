@@ -1,4 +1,5 @@
 import {useState, useEffect} from 'react';
+import { io } from 'socket.io-client';
 
 import '../index.css';
 import './styles.css';
@@ -30,12 +31,36 @@ function Control() {
     const [teamData, setTeamData] = useState<ConfigData | null>(null);
 
     useEffect(() => {
+    // یک تابع داخلی می‌سازیم که مسئول گرفتن داده‌ها باشد
+    const fetchDataForControlPanel = () => {
+        console.log("ControlPanel is fetching data...");
         getTeamData().then((data) => {
             setTeamData(data);
         });
-
         updateTablePreviewHeight();
-    }, []);
+    };
+
+    // ۱. در اولین بار که صفحه لود می‌شود، داده‌ها را می‌گیریم
+    fetchDataForControlPanel();
+
+    // ۲. به سرور سوکت متصل می‌شویم تا به آپدیت‌ها گوش دهیم
+    // (مطمئن شوید io در بالای فایل ایمپورت شده است)
+    const socket = io(process.env.REACT_APP_SOCKET_URL!, {
+  // کلاینت را به همان مسیر سفارشی سرور می‌فرستیم
+});
+    // ۳. به پیام 'teamDataUpdated' که از سرور می‌آید، گوش می‌دهیم
+    socket.on('teamDataUpdated', () => {
+        console.log('ControlPanel received teamDataUpdated event. Refetching...');
+        // وقتی خبری از سرور رسید، دوباره داده‌ها را می‌گیریم
+        fetchDataForControlPanel();
+    });
+
+    // ۴. تابع پاک‌سازی برای جلوگیری از مشکل حافظه
+    // این تابع وقتی اجرا می‌شود که از این صفحه خارج شوید
+    return () => {
+        socket.disconnect();
+    };
+}, []); // [] یعنی این افکت فقط یک بار در زمان لود اولیه اجرا می‌شود
 
     const elms = (teamId: number,  side: "increase" | "decrease" | number)=>{
         axios.post(`${process.env.REACT_APP_API_URL}/api/elms`, {
