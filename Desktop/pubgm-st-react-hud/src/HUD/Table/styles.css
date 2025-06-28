@@ -1,3 +1,4 @@
+/* استایل‌های اصلی شما (Desktop) */
 .gap-5 {
     gap: 5px;
 }
@@ -11,67 +12,79 @@
     margin: 0 auto;
     flex-direction: column;
 }
+
 .table-header-m {
     display: flex;
     width: 100%;
     height: 29px;
     border-bottom: 1px solid white;
-
     color: white;
     font-family: var(--font-family);
     font-family: var(--font-family-m);
     font-size: 18px;
 }
+
 .blank-div {
     display: flex;
     height: 100%;
     width: 40px;
 }
+
 .table-team-header {
     width: 130px;
 }
+
 .table-alive-side {
     width: 60px;
 }
+
 .table-stats-side {
     width: 65px;
 }
+
 .team-m {
     display: flex;
     width: 100%;
     height: 49px;
     border-bottom: 1px solid white;
-
     color: white;
     font-family: var(--font-family);
     font-family: var(--font-family-m);
     font-size: 26px;
 }
+
 .table-inner-element {
     display: flex;
     height: 100%;
     justify-content: center;
     align-items: center;
 }
+
 .team-rank-side {
     width: 40px;
 }
+
 .team-team-side {
     width: 130px;
 }
+
 .team-stats-side {
     width: 190px;
 }
+
 .team-logo-m {
     width: 40px;
 }
+
 .team-name-m {
     width: 90px;
     justify-content: left;
 }
+
 .team-logo {
     height: 55%;
 }
+
 .team-name-tb {
     margin-left: 7px;
     max-width: 90px;
@@ -81,6 +94,7 @@
     background-clip: content-box;
     -webkit-background-clip: text;
 }
+
 .team-alive-dv {
     display: flex;
     height: 63%;
@@ -91,9 +105,341 @@
 .knocked-player {
     background-color: rgb(203, 21, 21);
 }
+
 .eliminated-player {
     background-color: rgb(175, 175, 175);
 }
+
 .eliminated-player-txt {
     color: rgb(175, 175, 175);
+}
+
+/* ===================== RESPONSIVE STYLES ===================== */
+
+/* Tablet و Mobile بزرگ (768px و کمتر) */
+@media screen and (max-width: 768px) {
+    .table-m {
+        width: 95%;
+        max-width: 500px;
+        margin: 10px auto;
+    }
+
+    .table-header-m {
+        height: 35px;
+        font-size: 14px;
+        padding: 0 5px;
+    }
+
+    .blank-div {
+        width: 30px;
+    }
+
+    .table-team-header {
+        width: 140px;
+    }
+
+    .table-alive-side {
+        width: 70px;
+    }
+
+    .table-stats-side {
+        width: 60px;
+    }
+
+    .team-m {
+        height: 55px;
+        font-size: 20px;
+        padding: 0 5px;
+    }
+
+    .team-rank-side {
+        width: 30px;
+    }
+
+    .team-team-side {
+        width: 140px;
+    }
+
+    .team-stats-side {
+        width: 180px;
+    }
+
+    .team-logo-m {
+        width: 35px;
+    }
+
+    .team-name-m {
+        width: 105px;
+    }
+
+    .team-name-tb {
+        margin-left: 5px;
+        max-width: 100px;
+        font-size: 16px;
+    }
+
+    .team-alive-dv {
+        width: 8px;
+        height: 60%;
+    }
+
+    .gap-5 {
+        gap: 4px;
+    }
+}
+
+/* Mobile متوسط (480px و کمتر) */
+@media screen and (max-width: 480px) {
+    .table-m {
+        width: 98%;
+        margin: 5px auto;
+    }
+
+    .table-header-m {
+        height: 30px;
+        font-size: 12px;
+        padding: 0 3px;
+    }
+
+    .blank-div {
+        width: 25px;
+    }
+
+    .table-team-header {
+        width: 120px;
+    }
+
+    .table-alive-side {
+        width: 60px;
+    }
+
+    .table-stats-side {
+        width: 50px;
+    }
+
+    .team-m {
+        height: 50px;
+        font-size: 18px;
+        padding: 0 3px;
+    }
+
+    .team-rank-side {
+        width: 25px;
+    }
+
+    .team-team-side {
+        width: 120px;
+    }
+
+    .team-stats-side {
+        width: 160px;
+    }
+
+    .team-logo-m {
+        width: 30px;
+    }
+
+    .team-name-m {
+        width: 90px;
+    }
+
+    .team-name-tb {
+        margin-left: 3px;
+        max-width: 85px;
+        font-size: 14px;
+    }
+
+    .team-alive-dv {
+        width: 6px;
+        height: 55%;
+    }
+
+    .gap-5 {
+        gap: 3px;
+    }
+}
+
+/* Mobile کوچک (360px و کمتر) */
+@media screen and (max-width: 360px) {
+    .table-m {
+        width: 100%;
+        margin: 2px auto;
+    }
+
+    .table-header-m {
+        height: 28px;
+        font-size: 11px;
+        padding: 0 2px;
+    }
+
+    .blank-div {
+        width: 20px;
+    }
+
+    .table-team-header {
+        width: 100px;
+    }
+
+    .table-alive-side {
+        width: 55px;
+    }
+
+    .table-stats-side {
+        width: 45px;
+    }
+
+    .team-m {
+        height: 45px;
+        font-size: 16px;
+        padding: 0 2px;
+    }
+
+    .team-rank-side {
+        width: 20px;
+    }
+
+    .team-team-side {
+        width: 100px;
+    }
+
+    .team-stats-side {
+        width: 140px;
+    }
+
+    .team-logo-m {
+        width: 25px;
+    }
+
+    .team-name-m {
+        width: 75px;
+    }
+
+    .team-name-tb {
+        margin-left: 2px;
+        max-width: 70px;
+        font-size: 12px;
+    }
+
+    .team-alive-dv {
+        width: 5px;
+        height: 50%;
+    }
+
+    .gap-5 {
+        gap: 2px;
+    }
+}
+
+/* صفحات خیلی کوچک (320px و کمتر) - Layout عمودی */
+@media screen and (max-width: 320px) {
+    .table-header-m {
+        display: none; /* مخفی کردن هدر */
+    }
+
+    .team-m {
+        flex-direction: column;
+        height: auto;
+        min-height: 80px;
+        padding: 8px;
+        margin-bottom: 5px;
+        border-radius: 5px;
+        position: relative;
+    }
+
+    .team-m-parent {
+        padding: 0 5px;
+    }
+
+    .team-rank-side {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        width: auto;
+        height: auto;
+        background: rgba(0, 0, 0, 0.3);
+        padding: 2px 6px;
+        border-radius: 10px;
+        font-size: 12px;
+    }
+
+    .team-team-side {
+        width: 100%;
+        justify-content: flex-start;
+        margin-bottom: 8px;
+        padding-right: 30px;
+    }
+
+    .team-logo-m {
+        width: 30px;
+    }
+
+    .team-name-m {
+        width: auto;
+        flex: 1;
+    }
+
+    .team-name-tb {
+        margin-left: 8px;
+        max-width: none;
+        white-space: normal;
+        font-size: 14px;
+    }
+
+    .team-stats-side {
+        width: 100%;
+        justify-content: space-between;
+        flex-direction: row;
+        height: auto;
+    }
+
+    .table-alive-side {
+        width: auto;
+        justify-content: flex-start;
+    }
+
+    .table-stats-side {
+        width: auto;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+    }
+
+    .table-stats-side::before {
+        content: attr(data-label);
+        font-size: 10px;
+        opacity: 0.7;
+        text-transform: uppercase;
+    }
+
+    .team-alive-dv {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+    }
+}
+
+/* Landscape orientation برای موبایل */
+@media screen and (max-width: 768px) and (orientation: landscape) {
+    .table-m {
+        width: 98%;
+        max-width: 600px;
+    }
+
+    .team-m {
+        height: 40px;
+        font-size: 16px;
+    }
+
+    .table-header-m {
+        height: 25px;
+        font-size: 12px;
+    }
+
+    .team-logo-m {
+        width: 25px;
+    }
+
+    .team-name-tb {
+        font-size: 13px;
+    }
 }

@@ -6,16 +6,20 @@
     --font-family-m: 'Oswald', sans-serif;
     --font-poppins: 'Poppins', sans-serif;
 }
+
 .margin-top-15 {
     margin: 15px auto;
 }
+
 p {
     margin: 0;
     padding: 0;
 }
+
 button {
     border: none;
 }
+
 [contenteditable="true"]:focus {
     outline: none;
     border: 1px solid var(--main-color);
@@ -23,7 +27,6 @@ button {
     max-width: 70px;
     overflow-y: hidden;
 }
-
 
 .nav-bar {
     display: flex;
@@ -33,6 +36,7 @@ button {
     font-family: var(--font-poppins);
     justify-content: center;
 }
+
 .container {
     display: flex;
     left: 0;
@@ -40,6 +44,7 @@ button {
     width: 1200px;
     height: 100%;
 }
+
 .control-container-m {
     display: flex;
     flex-direction: row;
@@ -47,21 +52,21 @@ button {
 }
 
 /* Table Side */
-
 .table-container {
     display: flex;
     width: 370px;
     height: auto !important;
     overflow: hidden;
 }
+
 .iframe {
     width: 100%;
     height: 100%;
     position: relative;
     overflow: hidden;
 }
-/* Control Side */
 
+/* Control Side */
 .control-container {
     display: flex;
     width: 800px;
@@ -69,6 +74,7 @@ button {
     align-items: center;
     flex-direction: column;
 }
+
 .control-header {
     width: 780px;
     height: 40px;
@@ -82,6 +88,7 @@ button {
     font-family: var(--font-poppins);
     font-size: 22px;
 }
+
 .control-header-inn-m {
     display: flex;
     height: 32px;
@@ -90,15 +97,19 @@ button {
     justify-content: center;
     align-items: center;
 }
+
 .control-header-team {
     width: calc(31% + 5px);
 }
+
 .control-header-players {
     width: 39%;
 }
+
 .control-header-points {
     width: calc(100% - (31% + 15px) - 39%);
 }
+
 .control-div-m {
     width: 780px;
     height: 40px;
@@ -109,6 +120,7 @@ button {
     gap: 5px;
     align-items: center;
 }
+
 .control-div {
     display: flex;
     height: 87%;
@@ -118,6 +130,7 @@ button {
     font-family: var(--font-poppins);
     font-size: 18px;
 }
+
 .control-div-upper {
     display: flex;
     width: 100%;
@@ -126,12 +139,14 @@ button {
     gap: 5px;
     border-radius: 16px;
 }
+
 .control-div-down {
     display: none;
     width: 100%;
     align-items: center;
     border-radius: 16px;
 }
+
 .control-place {
     width: 5%;
     justify-content: center;
@@ -139,30 +154,32 @@ button {
 }
 
 /* Team Name */
-
 .control-team-name {
     width: 26%;
     justify-content: left;
     align-items: center;
 }
+
 .team-name {
     margin-left: 7px;
+    font-weight: 500;
 }
 
 /* Team Players */
-
 .control-team-players {
     width: 39%;
     justify-content: center;
     align-items: center;
     gap: 7px;
 }
+
 .control-team-players-down {
     width: 39%;
     justify-content: center;
     align-items: center;
     gap: 7px;
 }
+
 .control-button {
     display: flex;
     justify-content: center;
@@ -174,40 +191,53 @@ button {
     font-family: var(--font-poppins);
     font-size: 18px;
     cursor: pointer;
+    transition: all 0.2s ease;
 }
+
 .eliminate-button {
     background-color: red;
 }
+
 .eliminate-button:hover {
     background-color: rgb(255, 63, 63);
 }
+
 .eliminate-button:active {
     background-color: rgb(255, 127, 127);
 }
+
 .player-eliminate-button {
     background-color: var(--main-color);
 }
+
 .player-eliminate-button:hover {
     background-color: rgb(22, 155, 243);
 }
+
 .player-eliminate-button:active {
     background-color: rgb(97, 192, 255);
 }
+
 .player-knocked-button {
     background-color: var(--secondary-color);
 }
+
 .player-knocked-button:hover {
     background-color: rgb(100, 117, 126);
 }
+
 .player-knocked-button:active {
     background-color: rgb(140, 160, 170);
 }
+
 .elims-rs-button {
     background-color: var(--main-color);
 }
+
 .elims-rs-button:hover {
     background-color: rgb(10, 140, 226);
 }
+
 .elims-rs-button:active {
     background-color: rgb(44, 163, 243);
 }
@@ -217,13 +247,13 @@ button {
 }
 
 /* Team Points */
-
 .control-team-points {
     width: calc(100% - (31% + 15px) - 39%);
     justify-content: center;
     align-items: center;
     gap: 5px;
 }
+
 .control-m-p-div {
     display: flex;
     height: 100%;
@@ -231,6 +261,7 @@ button {
     justify-content: center;
     align-items: center;
 }
+
 .control-points-div {
     display: flex;
     justify-content: center;
@@ -238,6 +269,7 @@ button {
     height: 100%;
     width: 79px;
 }
+
 .auto-points {
     color: var(--secondary-color);
     border-radius: 16px;
@@ -245,12 +277,15 @@ button {
     font-family: 'Poppins';
     overflow: hidden;
     white-space: nowrap;
+    text-align: center;
 }
+
 .flex-div {
     display: flex;
     justify-content: center;
     align-items: center;
 }
+
 .control-reset-div {
     display: flex;
     justify-content: center;
@@ -260,136 +295,369 @@ button {
     gap: 3px;
 }
 
+/* Responsive بهبود یافته */
 
-/* Responsive */
-
+/* تبلت و لپتاپ کوچک */
 @media (max-width: 1400px) {
     .container {
-        width: 800px;
+        width: 95%;
+        max-width: 1200px;
+        padding: 0 10px;
     }
+
     .control-container-m {
         flex-direction: column;
-        gap: 50px;
+        gap: 30px;
+        align-items: center;
     }
+
+    .control-container {
+        width: 100%;
+        max-width: 800px;
+    }
+
+    .control-header,
+    .control-div-m {
+        width: 100%;
+        max-width: 780px;
+    }
+
     .table-container {
-        left: 0;
-        right: 0;
+        width: 100%;
+        max-width: 370px;
         margin: 0 auto;
     }
 }
+
+/* تبلت عمودی */
 @media (max-width: 880px) {
+    .container {
+        width: 95%;
+        padding: 0 15px;
+    }
+
     .control-header {
-        width: 780px;
-        height: 85px;
-        gap: 5px;
+        height: 140px;
         flex-direction: column;
+        gap: 8px;
+        padding: 8px;
+        font-size: 18px;
     }
+
     .control-div-m {
-        width: 780px;
-        height: 85px;
-        gap: 5px;
+        height: 140px;
         flex-direction: column;
+        gap: 8px;
+        padding: 8px;
     }
+
     .control-div-upper {
-        height: 40px;
-        gap: 10px;
+        height: 50px;
+        gap: 8px;
     }
+
     .control-div-down {
         display: flex;
-        height: 40px;
+        height: 60px;
         justify-content: center;
-    }
-    .control-team-players-down {
-        width: 100%;
-        justify-content: center;
+        background-color: aliceblue;
+        border-radius: 16px;
+        padding: 10px;
+        overflow-x: auto;
+        overflow-y: hidden;
         align-items: center;
-        gap: 25px;
     }
+
     .control-team-players {
         display: none;
     }
+
+    .control-team-players-down {
+        width: 100%;
+        justify-content: flex-start;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        padding: 8px;
+        display: flex;
+        flex-shrink: 0;
+    }
+
     .control-team-name {
-        width: 45%;
+        width: 50%;
+        font-size: 16px;
     }
+
     .control-team-points {
-        width: calc(100% - (50% + 15px));
-        gap: 15px;
+        width: 50%;
+        gap: 8px;
+        flex-wrap: wrap;
     }
-    .control-m-p-div {
-        width: 40px;
-    }
-    .control-points-div {
-        width: 90px;
-    }
-    .control-reset-div {
-        width: 80px;
-        gap: 10px;
-    }
+
     .control-header-players {
         display: none;
     }
+
     .control-header-team {
-        width: calc(50.65% + 5px);
+        width: 50%;
+        font-size: 16px;
     }
+
     .control-header-players-down {
         width: 100%;
+        font-size: 16px;
     }
+
     .control-header-points {
-        width: calc(100% - (50% + 15px));
+        width: 50%;
+        font-size: 16px;
+    }
+
+    .control-button {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 35px;
+        width: 35px;
+        border-radius: 50%;
+        color: aliceblue;
+        font-family: var(--font-poppins);
+        font-size: 16px;
+        flex-shrink: 0;
+        min-width: 35px;
+        min-height: 35px;
+    }
+
+    .auto-points {
+        font-size: 18px;
     }
 }
-@media (max-width: 825px) {
+
+/* موبایل افقی */
+@media (max-width: 768px) {
+    .nav-bar {
+        height: 45px;
+    }
+
     .container {
-        width: 700px;
+        padding: 0 10px;
     }
+
     .control-container {
-        width: 700px;
+        gap: 8px;
     }
-    .control-header {
-        width: 680px;
-    }
+
+    .control-header,
     .control-div-m {
-        width: 680px;
+        border-radius: 12px;
+    }
+
+    .control-div {
+        border-radius: 12px;
+    }
+
+    .control-header-inn-m {
+        border-radius: 12px;
+        font-size: 14px;
+    }
+
+    .control-button {
+        height: 32px;
+        width: 32px;
+        font-size: 14px;
+        flex-shrink: 0;
+        min-width: 32px;
+        min-height: 32px;
+    }
+
+    .team-name {
+        font-size: 14px;
+    }
+
+    .auto-points {
+        font-size: 16px;
     }
 }
-@media (max-width: 770px) {
+
+/* موبایل عمودی */
+@media (max-width: 480px) {
+    .margin-top-15 {
+        margin: 10px auto;
+    }
+
+    .nav-bar {
+        height: 40px;
+    }
+
     .container {
-        width: 600px;
+        width: 100%;
+        padding: 0 8px;
     }
+
     .control-container {
-        width: 600px;
+        width: 100%;
+        gap: 6px;
     }
+
     .control-header {
-        width: 560px;
+        height: 110px;
+        padding: 6px;
+        font-size: 14px;
+        gap: 6px;
     }
+
     .control-div-m {
-        width: 560px;
+        height: 110px;
+        padding: 6px;
+        gap: 6px;
     }
+
+    .control-div-upper {
+        height: 42px;
+        gap: 4px;
+    }
+
+    .control-div-down {
+        height: 42px;
+        padding: 0 8px;
+    }
+
+    .control-place {
+        width: 8%;
+        font-size: 14px;
+    }
+
+    .control-team-name {
+        width: 42%;
+    }
+
+    .team-name {
+        font-size: 12px;
+        margin-left: 4px;
+    }
+
     .control-team-points {
-        gap: 5px;
+        width: 50%;
+        gap: 4px;
+    }
+
+    .control-m-p-div {
+        width: 28px;
+    }
+
+    .control-points-div {
+        width: 50px;
+    }
+
+    .control-reset-div {
+        width: 60px;
+        gap: 3px;
+    }
+
+    .control-button {
+        height: 28px;
+        width: 28px;
+        font-size: 12px;
+        flex-shrink: 0;
+        min-width: 28px;
+        min-height: 28px;
+    }
+
+    .auto-points {
+        font-size: 14px;
+    }
+
+    .control-team-players-down {
+        gap: 8px;
+    }
+
+    .control-header-inn-m {
+        font-size: 12px;
+        height: 28px;
+    }
+
+    .control-header-team {
+        width: 50%;
+    }
+
+    .control-header-points {
+        width: 50%;
+    }
+
+    .table-container {
+        width: 100%;
+        max-width: 320px;
+        height: 400px;
     }
 }
-@media (max-width: 600px) {
+
+/* اضافه کردن اسکرول بار سفارشی برای دکمه‌ها */
+.control-team-players-down::-webkit-scrollbar {
+    height: 3px;
+}
+
+.control-team-players-down::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 2px;
+}
+
+.control-team-players-down::-webkit-scrollbar-thumb {
+    background: var(--secondary-color);
+    border-radius: 2px;
+}
+
+.control-team-players-down::-webkit-scrollbar-thumb:hover {
+    background: var(--main-color);
+}
+@media (max-width: 360px) {
     .container {
-        width: 500px;
+        padding: 0 5px;
     }
-    .control-container {
-        width: 500px;
-    }
-    .control-header {
-        width: 460px;
-    }
+
+    .control-header,
     .control-div-m {
-        width: 460px;
+        border-radius: 8px;
     }
-    .control-m-p-div {
-        width: 30px;
+
+    .control-div,
+    .control-div-down {
+        border-radius: 8px;
     }
-    .control-points-div {
-        width: 70px;
+
+    .control-header-inn-m {
+        border-radius: 8px;
+        font-size: 11px;
     }
-    .control-reset-div {
-        width: 70px;
+
+    .team-name {
+        font-size: 11px;
+    }
+
+    .control-button {
+        height: 26px;
+        width: 26px;
+        font-size: 11px;
+        flex-shrink: 0;
+        min-width: 26px;
+        min-height: 26px;
+    }
+
+    .auto-points {
+        font-size: 13px;
+    }
+
+    .control-team-players-down {
         gap: 5px;
+        flex-wrap: nowrap;
+        min-width: max-content;
+        overflow-x: auto;
+        justify-content: flex-start;
+        flex-shrink: 0;
+    }
+
+    .table-container {
+        max-width: 300px;
+        height: 350px;
     }
 }

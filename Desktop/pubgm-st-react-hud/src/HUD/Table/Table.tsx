@@ -24,8 +24,6 @@ const socket = io(process.env.REACT_APP_SOCKET_URL!, {
   // کلاینت را به همان مسیر سفارشی سرور می‌فرستیم
 });
 
-
-
 function Table() {
     const [teamData, setTeamData] = useState<ConfigData | null>(null);
     const [teamPointsM, setTeamPointsM] = useState<TeamPoints[] | null>(null);
@@ -35,14 +33,24 @@ function Table() {
     const [teamDatasA, setTeamDatasA] = useState<TeamDataA[] | null>(null);;
     const [eliminatedTeams, setEliminatedTeams] = useState<number[]>([]);
     const [dynamicData, setDynamicData] = useState<Record<number, teamPoints>>({});
+    const [isMobile, setIsMobile] = useState(false);
 
+    // تشخیص سایز صفحه
+    useEffect(() => {
+        const checkScreenSize = () => {
+            setIsMobile(window.innerWidth <= 768);
+        };
+
+        checkScreenSize();
+        window.addEventListener('resize', checkScreenSize);
+
+        return () => window.removeEventListener('resize', checkScreenSize);
+    }, []);
 
     useEffect(() => {
-        // ۱. تابعی برای گرفتن تمام داده‌های مورد نیاز جدول
         const fetchTableData = () => {
             console.log("Fetching initial table data...");
             getTeamData().then((data) => {
-                // این بخش‌ها از کد خودتان گرفته شده و صحیح است
                 setTeamColor(data[0].team_color);
                 setHeaderColor(data[0].header_color);
                 setTeamData(data);
@@ -59,17 +67,13 @@ function Table() {
             });
         };
 
-        // ۲. در اولین بار که کامپوننت لود می‌شود، داده‌ها را می‌گیریم
         fetchTableData();
 
-        // ۳. به پیام سرور برای آپدیت شدن نام/لوگو گوش می‌دهیم
         socket.on('teamDataUpdated', () => {
             console.log("Received 'teamDataUpdated' event. Refetching data...");
-            // به محض دریافت پیام، داده‌ها را دوباره می‌گیریم
             fetchTableData();
         });
 
-        // ۴. کدهای قبلی شما برای بقیه آپدیت‌های لحظه‌ای (این‌ها را دست نخورده باقی گذاشتم)
         socket.on('players_update', (data) => {
             if (data.players_knocked) {
                 if (data.players_knocked === 1) knockedOneEmit(data.team_id);
@@ -94,9 +98,6 @@ function Table() {
             setDynamicData(data);
         });
 
-
-        // ۵. تابع پاک‌سازی (Cleanup)
-        // این بخش بسیار مهم است تا وقتی از صفحه خارج می‌شوید، شنونده‌های تکراری ایجاد نشوند
         return () => {
             socket.off('teamDataUpdated');
             socket.off('players_update');
@@ -107,7 +108,8 @@ function Table() {
     }, []);
 
     const teamColorStyle: React.CSSProperties = {
-        backgroundColor: teamColor
+        backgroundColor: teamColor,
+        position: 'relative'
     };
     const headerColorStyle: React.CSSProperties = {
         backgroundColor: headerColor
@@ -125,7 +127,6 @@ function Table() {
             }
             if (data.team_eliminated && !eliminatedTeams.includes(data.team_id)) {
                 teamEliminatedEmit(data.team_id)
-
                 setEliminatedTeams((prevTeams) => [...prevTeams, data.team_id]);
             }
             if (data.players_eliminated) {
@@ -140,12 +141,18 @@ function Table() {
                 }
             }
         })
-        // eslint-disable-next-line
     }, [])
 
-
     useEffect(() => {
-        const sortedTeamInfo: TeamPoints[] = teamPointsM ? teamPointsM.slice().sort((a, b) => b.team_points - a.team_points) : [];
+        const sortedTeamInfo: TeamPoints[] = teamPointsM ? teamPointsM.slice().sort((a, b) => {
+            const aElims = dynamicData[a.team_id - 1]?.team_elms || 0;
+            const bElims = dynamicData[b.team_id - 1]?.team_elms || 0;
+
+            const aTotalScore = a.team_points + aElims;
+            const bTotalScore = b.team_points + bElims;
+
+            return bTotalScore - aTotalScore;
+        }) : [];
 
         if (sortedTeamInfo.length > 0) {
             const updatedTeamDatasA: ConfigData[keyof ConfigData][] = sortedTeamInfo.map((team) => {
@@ -163,8 +170,8 @@ function Table() {
             setTeamDatasA(updatedTeamDatasA);
         }
 
-
-        socket.on('points-update', (data) => {            const spanPts = document.querySelectorAll('.team-pts');
+        socket.on('points-update', (data) => {
+            const spanPts = document.querySelectorAll('.team-pts');
             let prevP: number = 0;
 
             spanPts.forEach((span) => {
@@ -238,38 +245,43 @@ function Table() {
                 }
             });
         });
-        // BULLSHIT CODES
 
         socket.on("dajjal", data => {
             setDynamicData(data);
         })
 
-    }, [teamData, teamPointsM, teamElimsM]);
+    }, [teamData, teamPointsM, teamElimsM, dynamicData]);
 
     console.log(dynamicData)
 
     return (
-        <div>
+        <div className="table-container">
             <div className='table-m'>
+                {/* Header - مخفی می‌شه در صفحات خیلی کوچک */}
                 <div className='table-header-m' style={headerColorStyle}>
                     <div className='blank-div'></div>
                     <div className='table-inner-element table-team-header'>TEAM</div>
                     <div className='table-inner-element table-alive-side'>ALIVE</div>
-                    <div className='table-inner-element table-stats-side'>PTS</div>
+                    <div className='table-inner-element table-stats-side'>PLC</div>
                     <div className='table-inner-element table-stats-side'>ELIMS</div>
                 </div>
+
                 <div className='team-m-parent'>
                 {teamPointsM && teamDatasA && teamDatasA.map((team, index) => (
                     <div className='team-m' key={index} style={teamColorStyle} data-team-color={teamColor}>
                         <div className='table-inner-element team-rank-side'>{index+1}</div>
+
                         <div className='table-inner-element team-team-side'>
                             <div className='table-inner-element team-logo-m'>
                                 <img src={`data:image/png;base64, ${team.logo_data}`} alt="" className='team-logo' />
                             </div>
                             <div className='table-inner-element team-name-m'>
-                                <span className='team-name-tb'>{(team.name).toUpperCase()}</span>
+                                <span className='team-name-tb' title={(team.name).toUpperCase()}>
+                                    {(team.name).toUpperCase()}
+                                </span>
                             </div>
                         </div>
+
                         <div className='table-inner-element team-stats-side'>
                             <div className='table-inner-element table-alive-side gap-5'>
                                 <div className={`team-alive-dv player-${team.id}-1`}></div>
@@ -277,15 +289,21 @@ function Table() {
                                 <div className={`team-alive-dv player-${team.id}-3`}></div>
                                 <div className={`team-alive-dv player-${team.id}-4`}></div>
                             </div>
-                            <div className='table-inner-element table-stats-side'>
+
+                            <div className='table-inner-element table-stats-side' data-label="PTS">
                                 <div className='table-inner-element'>
-                                    <span className='team-pts' id={`team-pts-${team.id}`}>{teamPointsM?.[team.id-1]?.team_points || 0}</span>
+                                    <span className='team-pts' id={`team-pts-${team.id}`}>
+                                        {teamPointsM?.[team.id-1]?.team_points || 0}
+                                    </span>
                                 </div>
                             </div>
-                            <div className='table-inner-element table-stats-side'>
+
+                            <div className='table-inner-element table-stats-side' data-label="ELIMS">
                                 <div className='table-inner-element'>
                                     {/*@ts-ignore*/}
-                                    <span className='team-elims' id={`team-elims-${team.id}`}>{dynamicData[team.id-1]?.team_elms || 0}</span>
+                                    <span className='team-elims' id={`team-elims-${team.id}`}>
+                                        {dynamicData[team.id-1]?.team_elms || 0}
+                                    </span>
                                 </div>
                             </div>
                         </div>
@@ -298,5 +316,3 @@ function Table() {
 }
 
 export default Table;
-
-

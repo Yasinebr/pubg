@@ -82,7 +82,7 @@ function Control() {
                         <div className='control-div-upper'>
                             <div className='control-header-inn-m control-header-team'>Team</div>
                             <div className='control-header-inn-m control-header-players'>Players</div>
-                            <div className='control-header-inn-m control-header-points'>Points</div>
+                            <div className='control-header-inn-m control-header-points'>PLCE</div>
                             <div className='control-header-inn-m control-header-points'>Elms</div>
                         </div>
                         <div className='control-div-down'>
