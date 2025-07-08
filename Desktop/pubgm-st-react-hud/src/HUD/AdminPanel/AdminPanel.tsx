@@ -1,3 +1,4 @@
+import { io } from "socket.io-client";
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './AdminPanel.css';
@@ -33,6 +34,23 @@ export const AdminPanel: React.FC = () => {
   };
 
   useEffect(() => {
+    const socket = io(process.env.REACT_APP_SOCKET_URL!);
+
+    // به پیغام 'teamDataUpdated' که از سرور می‌آید، گوش می‌دهیم
+    socket.on('teamDataUpdated', () => {
+        console.log('AdminPanel received teamDataUpdated event. Refetching teams...');
+        // وقتی خبری از سرور رسید، داده‌ها را دوباره می‌گیریم
+        fetchTeams();
+    });
+
+    // تابع پاک‌سازی برای جلوگیری از مشکل حافظه
+    return () => {
+        socket.disconnect();
+    };
+}, []); // [] یعنی این افکت فقط یک بار اجرا می‌شود
+
+
+  useEffect(() => {
     fetchTeams(); // در اولین بار داده‌ها را می‌گیریم
   }, []);
 
@@ -48,9 +66,11 @@ export const AdminPanel: React.FC = () => {
     formData.append('logo_file', newTeamLogo);
 
     try {
+      // فقط درخواست افزودن تیم را به سرور ارسال کنید.
       await axios.post(`${process.env.REACT_APP_API_URL}/api/admin/add-team`, formData);
       alert('Team added successfully!');
-      fetchTeams(); // لیست تیم‌ها را دوباره می‌گیریم تا تیم جدید نمایش داده شود
+      // fetchTeams(); // <<<<<<< این خط برای جلوگیری از آپدیت دوگانه و مشکل تکراری شدن، حذف شد.
+
       // فرم را خالی می‌کنیم
       setNewTeamName('');
       setNewTeamInitial('');
@@ -63,25 +83,26 @@ export const AdminPanel: React.FC = () => {
       alert('Failed to add team.');
       console.error(error);
     }
-  };
+};
 
   const handleDeleteTeam = async (teamId: number) => {
-    // از کاربر تایید می‌گیریم
-    if (window.confirm(`Are you sure you want to delete team with ID ${teamId}? This action cannot be undone.`)) {
-      try {
-        await axios.post(`${process.env.REACT_APP_API_URL}/api/admin/delete-team`, {
-          data: { team_id: teamId }
-        });
-        alert('Team deleted successfully!');
-        fetchTeams(); // لیست تیم‌ها را دوباره می‌گیریم
-      } catch (error) {
-        alert('Failed to delete team.');
-        console.error(error);
-      }
+  // از کاربر تایید می‌گیریم
+  if (window.confirm(`Are you sure you want to delete team with ID ${teamId}? This action cannot be undone.`)) {
+    try {
+      // فقط درخواست حذف را به سرور ارسال کنید و تمام.
+      await axios.post(`${process.env.REACT_APP_API_URL}/api/admin/delete-team`, {
+        data: { team_id: teamId }
+      });
+      alert('Team deleted successfully!');
+      // fetchTeams(); // <<<<<<< این خط حذف شد تا از آپدیت دوگانه جلوگیری شود.
+    } catch (error) {
+      alert('Failed to delete team.');
+      console.error(error);
     }
-  };
+  }
+};
 
-  // --- توابع قبلی شما برای ویرایش بدون تغییر باقی مانده‌اند ---
+
   const handleUpdateName = async (teamId: number) => {
     const newName = teamNameInputs[teamId];
     if (!newName) {
@@ -89,16 +110,17 @@ export const AdminPanel: React.FC = () => {
       return;
     }
     try {
+      // فقط درخواست آپدیت را به سرور ارسال کنید.
       await axios.post(`${process.env.REACT_APP_API_URL}/api/admin/update-name`, {
         data: { team_id: teamId, new_name: newName }
       });
       alert('Team name updated successfully!');
-      fetchTeams(); // لیست تیم‌ها را دوباره می‌گیریم
+      // fetchTeams(); // <<<<<<< این خط برای جلوگیری از آپدیت دوگانه حذف شد.
     } catch (error) {
       alert('Failed to update name.');
       console.error(error);
     }
-  };
+};
 
   const handleUpdateLogo = async (teamId: number) => {
     const logoFile = teamLogoFiles[teamId];
@@ -111,14 +133,15 @@ export const AdminPanel: React.FC = () => {
     formData.append('logo_file', logoFile);
 
     try {
+      // Only send the update request to the server.
       await axios.post(`${process.env.REACT_APP_API_URL}/api/admin/update-logo`, formData);
       alert('Logo updated successfully!');
-      fetchTeams(); // لیست تیم‌ها را دوباره می‌گیریم
+      // fetchTeams(); // <<<<<<< This line was removed to prevent a double update.
     } catch (error) {
       alert('Failed to update logo.');
       console.error(error);
-    }
-  };
+  }
+};
 
 
   return (
