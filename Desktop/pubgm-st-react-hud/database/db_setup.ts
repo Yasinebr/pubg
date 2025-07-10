@@ -1,36 +1,49 @@
 import sqlite3 from 'sqlite3';
 import teamData from '../team_data/config.json';
 
-const db = new sqlite3.Database('./database.db');
+// آدرس صحیح پایگاه داده
+const db = new sqlite3.Database('./database/database.db', (err) => {
+    if (err) {
+        return console.error('Error opening database', err.message);
+    }
+    console.log('Connected to the SQLite database.');
+});
 
 db.serialize(() => {
-    /*db.get('PRAGMA table_info(team_points)', (err, result) => {
-        if (!err && result) {
-            const statement2 = db.prepare('DROP TABLE team_points');
-            statement2.run();
-            statement2.finalize();
+    const createTableQuery = `
+    CREATE TABLE IF NOT EXISTS team_points (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        team_id INTEGER UNIQUE,
+        team_points INTEGER DEFAULT 0,
+        team_elms INTEGER DEFAULT 0
+    )`;
 
-            console.log('Table was deleted.');
+    db.run(createTableQuery, (err) => {
+        if (err) {
+            return console.error('Error creating table', err.message);
         }
+        console.log('Table "team_points" created or already exists.');
 
-        createTableAndInsertData();
-    });*/
-});
-createTableAndInsertData()
-function createTableAndInsertData() {
-    try {
+        const insertStmt = db.prepare('INSERT OR IGNORE INTO team_points (team_id, team_points, team_elms) VALUES (?, ?, ?)');
+
         for (let i = 0; i < teamData.team_data.length; i++) {
-            db.serialize(() => {
-                const statement = db.prepare('CREATE TABLE IF NOT EXISTS team_points (id INTEGER PRIMARY KEY, team_id INTEGER, team_points INTEGER, team_elms INTEGER)');
-                statement.run();
-
-                const insertStatement = db.prepare('INSERT INTO team_points (team_id, team_points, team_elms) VALUES (?, ?, ?)');
-                insertStatement.run(i + 1, 0,0);
-                insertStatement.finalize();
-            });
+            insertStmt.run(i + 1, 0, 0);
         }
-        console.log('Table was created and data was inserted.');
-    } catch {
-        console.log('Something was happened. Check team data and config.json')
-    }
-};
+
+        // فقط بعد از اینکه آخرین دستور تمام شد، دیتابیس را می‌بندیم
+        insertStmt.finalize((err) => {
+            if (err) {
+                return console.error('Error inserting data', err.message);
+            }
+            console.log('Data insertion complete.');
+
+            // <<<<< دستور بستن به اینجا منتقل شد
+            db.close((err) => {
+                if (err) {
+                    return console.error('Error closing database', err.message);
+                }
+                console.log('Closed the database connection.');
+            });
+        });
+    });
+});
