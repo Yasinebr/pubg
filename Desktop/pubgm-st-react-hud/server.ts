@@ -183,21 +183,42 @@ app.post('/api/players_update', (req, res) => {
     }
 });
 
+app.get('/api/team_elims', (req, res) => {
+    db.all('SELECT team_id, team_elms FROM team_points', [], (err, rows) => {
+        if (err) {
+            console.error(err.message);
+            return res.status(500).json({ error: 'An error occurred while fetching elims' });
+        }
+        res.json({ data: rows });
+    });
+});
+
 app.post("/api/elms", (req,res) => {
     const { data } = req.body as {data: {points: number, team_id: number}};
     let points: teamPoints[] = [];
     try {
         db.serialize(function() {
             db.all('SELECT * FROM team_points', (err, rows: teamPointsRow[]) => {
-                if (err) { /* ... */ }
+                if (err) {
+                    return res.status(500).json({ error: 'Database error' });
+                }
                 points = rows;
+
+                // پیدا کردن تیم براساس team_id
+                const teamIndex = points.findIndex(p => p.team_id === data.team_id);
+
+                if (teamIndex === -1) {
+                    return res.status(404).json({ error: 'Team not found' });
+                }
+
                 const statement = db.prepare('UPDATE team_points SET team_elms = ? WHERE team_id = ?');
-                const pre = points[data.team_id].team_elms || 0;
+                const pre = points[teamIndex].team_elms || 0; // ✅ درست شد
                 const n = pre + data.points;
-                statement.run(n, data.team_id+1);
+                statement.run(n, data.team_id); // ✅ درست شد - +1 حذف شد
                 statement.finalize();
+
                 let c = [...points];
-                c[data.team_id] = { ...c[data.team_id], team_elms: n }
+                c[teamIndex] = { ...c[teamIndex], team_elms: n }; // ✅ درست شد
                 const o = Object.fromEntries(c.map(o => ([o.team_id - 1, o])));
                 io.emit("dajjal", o)
             });
@@ -282,41 +303,44 @@ app.post('/api/admin/add-team', upload.single('logo_file'), async (req, res) => 
     }
 
     try {
-        const fileContent = await fs.promises.readFile(configPath, 'utf8');
-        const config = JSON.parse(fileContent);
+        // مرحله ۱: پیدا کردن بزرگترین ID موجود در دیتابیس
+        db.get('SELECT MAX(team_id) as maxId FROM team_points', async (err, row: { maxId: number | null }) => {
+            if (err) {
+                console.error("Error finding max team_id:", err);
+                return res.status(500).send('Failed to determine new team ID.');
+            }
 
-        // ساخت آبجکت تیم جدید
-        const newTeam = {
-            name: team_name,
-            initial: team_initial,
-            logo: `team_data/team_logos/${logoFile.filename}`
-        };
+            // ID جدید یکی بیشتر از بزرگترین ID قبلی خواهد بود
+            const newTeamId = (row && row.maxId) ? row.maxId + 1 : 1;
 
-        // اضافه کردن تیم جدید به آرایه
-        config.team_data.push(newTeam);
+            const fileContent = await fs.promises.readFile(configPath, 'utf8');
+            const config = JSON.parse(fileContent);
 
-        // پیدا کردن ID جدید (بر اساس طول آرایه)
-        const newTeamId = config.team_data.length;
+            const newTeam = {
+                id: newTeamId, // <<<< از ID جدید استفاده می‌کنیم
+                name: team_name,
+                initial: team_initial,
+                logo: `team_data/team_logos/${logoFile.filename}`
+            };
 
-        // ذخیره کردن فایل کانفیگ جدید
-        await fs.promises.writeFile(configPath, JSON.stringify(config, null, 2), 'utf8');
+            config.team_data.push(newTeam);
 
-        // اضافه کردن ردیف جدید به دیتابیس برای امتیازات
-        db.run('INSERT INTO team_points (team_id, team_points, team_elms) VALUES (?, ?, ?)',
-               [newTeamId, 0, 0],
-               (err) => {
-                    if (err) {
-                        console.error("Error inserting new team into database:", err);
-                        // در یک سناریوی واقعی باید تغییر در config.json را هم برگرداند (rollback)
+            await fs.promises.writeFile(configPath, JSON.stringify(config, null, 2), 'utf8');
+
+            // مرحله ۲: اضافه کردن ردیف جدید به دیتابیس با ID صحیح
+            db.run('INSERT INTO team_points (team_id, team_points, team_elms) VALUES (?, ?, ?)',
+                [newTeamId, 0, 0],
+                (insertErr) => {
+                    if (insertErr) {
+                        console.error("Error inserting new team into database:", insertErr);
                         return res.status(500).send('Failed to add team to database.');
                     }
 
-                    // اطلاع‌رسانی به همه کلاینت‌ها
                     io.sockets.emit('teamDataUpdated');
                     console.log(`Team "${team_name}" added with ID ${newTeamId}.`);
                     res.status(200).send({ message: 'Team added successfully!' });
-               });
-
+                });
+        });
     } catch (error) {
         console.error("Error in add-team:", error);
         res.status(500).send('Failed to add team.');
@@ -347,19 +371,30 @@ app.post('/api/admin/delete-team', async (req, res) => {
         // ذخیره کردن فایل کانفیگ جدید
         await fs.promises.writeFile(configPath, JSON.stringify(config, null, 2), 'utf8');
 
-        // حذف ردیف مربوطه از دیتابیس امتیازات
-        db.run('DELETE FROM team_points WHERE team_id = ?', [team_id], (err) => {
-            if (err) {
-                console.error(`Error deleting team ID ${team_id} from database:`, err);
-                return res.status(500).send('Failed to delete team from database.');
-            }
+        // استفاده از serialize برای اجرای دستورات به ترتیب
+        db.serialize(() => {
+            // مرحله ۱: ردیف تیم مورد نظر را از دیتابیس حذف کن
+            db.run('DELETE FROM team_points WHERE team_id = ?', [team_id], function(err) {
+                if (err) {
+                    console.error(`Error deleting team ID ${team_id} from database:`, err);
+                    // در یک سناریوی واقعی، باید تغییر در config.json را هم برگردانیم (rollback)
+                    return res.status(500).send('Failed to delete team from database.');
+                }
 
-            // توجه: باید ID تیم‌های بعدی را در دیتابیس آپدیت کنیم که جای خالی ایجاد نشود.
-            // این بخش کمی پیچیده است و در نسخه ساده‌تر فعلاً از آن صرف نظر می‌کنیم.
+                // مرحله ۲ (بخش کلیدی و جدید): آی‌دی تمام تیم‌های بعدی را یک واحد کم کن
+                const updateQuery = 'UPDATE team_points SET team_id = team_id - 1 WHERE team_id > ?';
+                db.run(updateQuery, [team_id], function(updateErr) {
+                    if (updateErr) {
+                        console.error(`Error updating subsequent team IDs:`, updateErr);
+                        return res.status(500).send('Failed to update subsequent team IDs.');
+                    }
 
-            io.sockets.emit('teamDataUpdated');
-            console.log(`Team with ID ${team_id} has been deleted.`);
-            res.status(200).send({ message: 'Team deleted successfully!' });
+                    // حالا که همه چیز هماهنگ شد، به همه اطلاع‌رسانی کن
+                    io.sockets.emit('teamDataUpdated');
+                    console.log(`Team with ID ${team_id} has been deleted and subsequent IDs have been updated.`);
+                    res.status(200).send({ message: 'Team deleted successfully!' });
+                });
+            });
         });
 
     } catch (error) {

@@ -1,13 +1,9 @@
 {
   "team_data": [
     {
-      "name": "Ghost Gaming",
-      "initial": "Ghost",
-      "logo": "team_data/team_logos/2.png"
-    },
-    {
-      "name": "bbc",
-      "initial": "sa",
+      "id": 1,
+      "name": "test",
+      "initial": "ew",
       "logo": "team_data/team_logos/Screenshot 2025-02-21 113136.png"
     }
   ],

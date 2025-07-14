@@ -1,5 +1,7 @@
 export interface ConfigData {
     [key: string]: {
+        elms: any;
+        pts: any;
         id: number,
         name: string,
         initial: string,

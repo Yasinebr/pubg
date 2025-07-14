@@ -155,7 +155,23 @@ function Table() {
         }) : [];
 
         if (sortedTeamInfo.length > 0) {
-            const updatedTeamDatasA: ConfigData[keyof ConfigData][] = sortedTeamInfo.map((team) => {
+            const updatedTeamDatasA: ({
+                elms: any;
+                pts: any;
+                id: number;
+                name: string;
+                initial: string;
+                logo_data: string;
+                team_color: string;
+                header_color: string
+            } | {
+                team_color: string;
+                header_color: string;
+                initial: string;
+                name: string;
+                logo_data: string;
+                id: number
+            })[] = sortedTeamInfo.map((team) => {
                 const teamDataItem = teamData?.[team.team_id - 1];
                 return teamDataItem || {
                     id: 0,
