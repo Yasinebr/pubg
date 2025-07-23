@@ -1,6 +1,9 @@
 import {useState, useEffect} from 'react';
 import { io } from 'socket.io-client';
 
+// بالای فایل Control.tsx
+import Table from '../Table/Table'; // این خط را اضافه کنید
+
 import '../index.css';
 import './styles.css';
 
@@ -30,6 +33,7 @@ import axios from "axios";
 function Control() {
     const [teamData, setTeamData] = useState<ConfigData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [playerStatuses, setPlayerStatuses] = useState<{ [key: string]: number }>({});
 
     // بارگذاری مقادیر اولیه از localStorage
     const [teamElims, setTeamElims] = useState<{[key: string]: number}>(() => {
@@ -145,7 +149,7 @@ function Control() {
         });
     }
 
-    const addPointsLocal = (teamKey: string) => {
+    const addPoints = (teamKey: string) => {
         const teamId = parseInt(teamKey) + 1;
         // ارسال درخواست به بک‌اند برای اضافه کردن ۱ امتیاز
         axios.post(`${process.env.REACT_APP_API_URL}/api/update_points`, {
@@ -159,7 +163,7 @@ function Control() {
         }).catch(error => console.error("Failed to add points:", error));
     };
 
-    const remPointsLocal = (teamKey: string) => {
+    const remPoints = (teamKey: string) => {
         const teamId = parseInt(teamKey) + 1;
         // ارسال درخواست به بک‌اند برای کم کردن ۱ امتیاز
         axios.post(`${process.env.REACT_APP_API_URL}/api/update_points`, {
@@ -205,6 +209,7 @@ function Control() {
     }
 };
 
+
     return (
         <div>
             <div className='nav-bar'>
@@ -220,12 +225,10 @@ function Control() {
                     <div className='control-header'>
                         <div className='control-div-upper'>
                             <div className='control-header-inn-m control-header-team'>Team</div>
-                            <div className='control-header-inn-m control-header-players'>Players</div>
                             <div className='control-header-inn-m control-header-points'>PLCE</div>
-                            <div className='control-header-inn-m control-header-points'>Elms</div>
+                            <div className='control-header-inn-m control-header-points'>ELM</div>
                         </div>
                         <div className='control-div-down'>
-                            <div className='control-header-inn-m control-header-players-down'>Players</div>
                         </div>
                     </div>
 
@@ -242,37 +245,11 @@ function Control() {
                                         <p className='team-name'
                                            id={`team-name-${parseInt(key) + 1}`}>{teamData[key].name}</p>
                                     </div>
-                                    <div className='control-div control-team-players' id={`team-id-${parseInt(key) + 1}`}>
-                                        <span className='team-eliminated'>Team Eliminated</span>
-                                        <button className='control-button eliminate-button' onClick={teamEliminated}>0
-                                        </button>
-                                        <button className='control-button player-eliminate-button' id='eliminated-3'
-                                                onClick={eliminatedPlayer}>1
-                                        </button>
-                                        <button className='control-button player-eliminate-button' id='eliminated-2'
-                                                onClick={eliminatedPlayer}>2
-                                        </button>
-                                        <button className='control-button player-eliminate-button' id='eliminated-1'
-                                                onClick={eliminatedPlayer}>3
-                                        </button>
-                                        <button className='control-button player-eliminate-button'
-                                                id={`team-${parseInt(key) + 1}-4`} onClick={playersAlive4}>4
-                                        </button>
-                                        <button className='control-button player-knocked-button' id='knocked-1'
-                                                onClick={knockedPlayer}>-1
-                                        </button>
-                                        <button className='control-button player-knocked-button' id='knocked-2'
-                                                onClick={knockedPlayer}>-2
-                                        </button>
-                                        <button className='control-button player-knocked-button' id='knocked-3'
-                                                onClick={knockedPlayer}>-3
-                                        </button>
-                                    </div>
                                     <div className='control-div control-team-points'>
                                         <div className='flex-div'>
                                             <div className='control-m-p-div'>
                                                 <button className='control-button player-knocked-button'
-                                                        onClick={() => remPointsLocal(key)}>-
+                                                        onClick={() => remPoints(key)}>-
                                                 </button>
                                             </div>
                                             <div className='control-points-div'>
@@ -290,15 +267,9 @@ function Control() {
                                             </div>
                                             <div className='control-m-p-div'>
                                                 <button className='control-button player-knocked-button'
-                                                        onClick={() => addPointsLocal(key)}>+
+                                                        onClick={() => addPoints(key)}>+
                                                 </button>
                                             </div>
-                                        </div>
-                                        <div className='control-reset-div'>
-                                            <button className='control-button eliminate-button' onClick={resetPoints}>R
-                                            </button>
-                                            <button className='control-button elims-rs-button' onClick={resetElims}>E
-                                            </button>
                                         </div>
                                     </div>
                                     <div className='control-div control-team-points'>
@@ -324,43 +295,13 @@ function Control() {
                                         </div>
                                     </div>
                                 </div>
-                                {/* بخش پایینی که دکمه‌های آن کامل شد */}
-                                <div className='control-div-down'>
-                                    <div className='control-div control-team-players-down'
-                                         id={`team-id-${parseInt(key) + 1}`}>
-                                        <span className='team-eliminated'>Team Eliminated</span>
-                                        <button className='control-button eliminate-button'
-                                                onClick={teamEliminatedHidden}>0
-                                        </button>
-                                        <button className='control-button player-eliminate-button' id='eliminated-3'
-                                                onClick={eliminatedPlayerHidden}>1
-                                        </button>
-                                        <button className='control-button player-eliminate-button' id='eliminated-2'
-                                                onClick={eliminatedPlayerHidden}>2
-                                        </button>
-                                        <button className='control-button player-eliminate-button' id='eliminated-1'
-                                                onClick={eliminatedPlayerHidden}>3
-                                        </button>
-                                        <button className='control-button player-eliminate-button'
-                                                id={`team-${parseInt(key) + 1}-4`} onClick={playersAlive4Hidden}>4
-                                        </button>
-                                        <button className='control-button player-knocked-button' id='knocked-1'
-                                                onClick={knockedPlayerHidden}>-1
-                                        </button>
-                                        <button className='control-button player-knocked-button' id='knocked-2'
-                                                onClick={knockedPlayerHidden}>-2
-                                        </button>
-                                        <button className='control-button player-knocked-button' id='knocked-3'
-                                                onClick={knockedPlayerHidden}>-3
-                                        </button>
-                                    </div>
-                                </div>
                             </div>
                         ))
                     )}
                 </div>
                 <div className='table-container'>
-                    <iframe title='table' src='/table' frameBorder='0' className='iframe'></iframe>
+                    {/* <iframe title='table' src='/table' frameBorder='0' className='iframe'></iframe> */}
+                    <Table/>
                 </div>
             </div>
         </div>

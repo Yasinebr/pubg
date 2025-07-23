@@ -270,24 +270,31 @@ function Table() {
 
     console.log(dynamicData)
 
+    // فانکشن برای محاسبه مجموع points و elims
+    const getTeamTotal = (teamId: number): number => {
+        const points = teamPointsM?.[teamId - 1]?.team_points || 0;
+        const elims = dynamicData[teamId - 1]?.team_elms || 0;
+        return points + elims;
+    };
+
     return (
         <div className="table-container">
             <div className='table-m'>
                 {/* Header - مخفی می‌شه در صفحات خیلی کوچک */}
-                <div className='table-header-m' style={headerColorStyle}>
-                    <div className='blank-div'></div>
-                    <div className='table-inner-element table-team-header'>TEAM</div>
-                    <div className='table-inner-element table-alive-side'>ALIVE</div>
-                    <div className='table-inner-element table-stats-side'>PLC</div>
-                    <div className='table-inner-element table-stats-side'>ELIMS</div>
+                <div className='table-header-m' style={{...headerColorStyle, display: 'flex', alignItems: 'center'}}>
+                    <div className='blank-div column-rank'>#</div>
+                    <div className='table-inner-element table-team-header column-team'>TEAM NAME</div>
+                    <div className='table-inner-element table-stats-side column-pts'>PLC</div>
+                    <div className='table-inner-element table-stats-side column-elims'>ELM</div>
+                    <div className='table-inner-element table-stats-side column-total'>TOTAL</div>
                 </div>
 
                 <div className='team-m-parent'>
                 {teamPointsM && teamDatasA && teamDatasA.map((team, index) => (
-                    <div className='team-m' key={index} style={teamColorStyle} data-team-color={teamColor}>
-                        <div className='table-inner-element team-rank-side'>{index+1}</div>
+                    <div className='team-m' key={index} style={{...teamColorStyle, display: 'flex', alignItems: 'center'}} data-team-color={teamColor}>
+                        <div className='table-inner-element team-rank-side column-rank'>{index+1}</div>
 
-                        <div className='table-inner-element team-team-side'>
+                        <div className='table-inner-element team-team-side column-team'>
                             <div className='table-inner-element team-logo-m'>
                                 <img src={`data:image/png;base64, ${team.logo_data}`} alt="" className='team-logo' />
                             </div>
@@ -297,30 +304,28 @@ function Table() {
                                 </span>
                             </div>
                         </div>
-
-                        <div className='table-inner-element team-stats-side'>
-                            <div className='table-inner-element table-alive-side gap-5'>
-                                <div className={`team-alive-dv player-${team.id}-1`}></div>
-                                <div className={`team-alive-dv player-${team.id}-2`}></div>
-                                <div className={`team-alive-dv player-${team.id}-3`}></div>
-                                <div className={`team-alive-dv player-${team.id}-4`}></div>
+                        <div className='table-inner-element table-stats-side column-pts' data-label="PTS">
+                            <div className='table-inner-element'>
+                                <span className='team-pts' id={`team-pts-${team.id}`}>
+                                    {teamPointsM?.[team.id-1]?.team_points || 0}
+                                </span>
                             </div>
+                        </div>
 
-                            <div className='table-inner-element table-stats-side' data-label="PTS">
-                                <div className='table-inner-element'>
-                                    <span className='team-pts' id={`team-pts-${team.id}`}>
-                                        {teamPointsM?.[team.id-1]?.team_points || 0}
-                                    </span>
-                                </div>
+                        <div className='table-inner-element table-stats-side column-elims' data-label="ELIMS">
+                            <div className='table-inner-element'>
+                                {/*@ts-ignore*/}
+                                <span className='team-elims' id={`team-elims-${team.id}`}>
+                                    {dynamicData[team.id-1]?.team_elms || 0}
+                                </span>
                             </div>
+                        </div>
 
-                            <div className='table-inner-element table-stats-side' data-label="ELIMS">
-                                <div className='table-inner-element'>
-                                    {/*@ts-ignore*/}
-                                    <span className='team-elims' id={`team-elims-${team.id}`}>
-                                        {dynamicData[team.id-1]?.team_elms || 0}
-                                    </span>
-                                </div>
+                        <div className='table-inner-element table-stats-side column-total' data-label="TOTAL">
+                            <div className='table-inner-element'>
+                                <span className='team-total' id={`team-total-${team.id}`}>
+                                    {getTeamTotal(team.id)}
+                                </span>
                             </div>
                         </div>
                     </div>
