@@ -57,7 +57,7 @@ const db = new sqlite3.Database(dbPath, (err) => {
 // ----------------- MIDDLEWARE -----------------
 app.use(cors({ origin: allowedOrigin }));
 app.use(express.json());
-app.use('/team_data/team_logos', express.static(path.join(__dirname, 'team_data/team_logos')));
+app.use('/team_data/team_logos', express.static(path.join(__dirname, '..', 'team_data/team_logos')));
 
 // ----------------- SOCKET.IO CONNECTION LOGIC -----------------
 io.on('connection', (socket) => {
