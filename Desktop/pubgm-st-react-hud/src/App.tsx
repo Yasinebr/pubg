@@ -27,7 +27,7 @@ function App() {
             <Route path="/overall" element={<OverallTable />} />
 
             {/* بقیه روت‌های شما */}
-            <Route path='/table' element={<Table />} />
+            <Route path="/table/:matchId" element={<Table />} />
             <Route path='/control' element={<Control />} />
             <Route path="/admin" element={<AdminPanel />} />
           </Routes>

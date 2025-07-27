@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import io from 'socket.io-client';
+import { useParams, Link } from 'react-router-dom';
 import { useMatch } from '../../contexts/MatchContext';
+import io from 'socket.io-client';
 
 import '../index.css';
 import './styles.css';
@@ -14,22 +14,30 @@ interface Team {
   logo: string;
 }
 
-// [۱. اصلاح اینترفیس]: پراپرتی is_eliminated اضافه شد
 interface TeamPoints {
   team_id: number;
   team_points: number;
   team_elms: number;
-  is_eliminated: number; // 0 for false, 1 for true
+  is_eliminated: number;
 }
 
 // کامپوننت اصلی
 function Table() {
-    const { selectedMatchId } = useMatch();
+    // گرفتن ID از هر دو منبع: URL و Context
+    const { matchId: paramMatchId } = useParams<{ matchId: string }>();
+    const { selectedMatchId: contextMatchId } = useMatch();
+
+    // اولویت با ID موجود در URL است، در غیر این صورت از Context استفاده کن
+    const activeMatchId = paramMatchId || contextMatchId;
+
     const [teams, setTeams] = useState<Team[]>([]);
     const [points, setPoints] = useState<TeamPoints[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        if (!selectedMatchId) {
+        // تمام منطق حالا بر اساس activeMatchId کار می‌کند
+        if (!activeMatchId) {
+            setIsLoading(false);
             setTeams([]);
             setPoints([]);
             return;
@@ -37,10 +45,11 @@ function Table() {
 
         const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
         const fetchMatchData = async () => {
+            setIsLoading(true);
             try {
                 const [teamsRes, pointsRes] = await Promise.all([
-                    fetch(`${apiUrl}/api/teams/${selectedMatchId!}`),
-                    fetch(`${apiUrl}/api/points/${selectedMatchId!}`)
+                    fetch(`${apiUrl}/api/teams/${activeMatchId}`),
+                    fetch(`${apiUrl}/api/points/${activeMatchId}`)
                 ]);
                 const teamsData = await teamsRes.json();
                 const pointsData = await pointsRes.json();
@@ -48,16 +57,18 @@ function Table() {
                 setPoints(pointsData.data);
             } catch (error) {
                 console.error("Failed to fetch match data:", error);
+            } finally {
+                setIsLoading(false);
             }
         };
 
         fetchMatchData();
 
         const socket = io(process.env.REACT_APP_SOCKET_URL || 'http://localhost:3001');
-        socket.emit('joinMatch', selectedMatchId);
+        socket.emit('joinMatch', activeMatchId);
 
         const handleDataUpdate = (data: { match_id: any }) => {
-            if (data.match_id == selectedMatchId) fetchMatchData();
+            if (data.match_id == activeMatchId) fetchMatchData();
         };
 
         socket.on('dataUpdated', handleDataUpdate);
@@ -68,15 +79,19 @@ function Table() {
             socket.off('teamDataUpdated', handleDataUpdate);
             socket.disconnect();
         };
-    }, [selectedMatchId]);
+    }, [activeMatchId]);
 
-    if (!selectedMatchId) {
+    if (isLoading) {
+        return <div style={{ color: 'white', textAlign: 'center', paddingTop: '20px' }}>Loading Data...</div>;
+    }
+
+    if (!activeMatchId) {
         return (
-            <div style={{ padding: '20px', textAlign: 'center' }}>
-                <h2>No location selected.</h2>
-                <p>To view the leaderboard, please select a match first.</p>
+            <div style={{ padding: '20px', textAlign: 'center', color: 'white' }}>
+                <h2>No Match Selected</h2>
+                <p>Please select a match first to view the leaderboard.</p>
                 <Link to="/matches">
-                    <button>Go to the wrist selection page</button>
+                    <button>Go to Match Selection</button>
                 </Link>
             </div>
         );
@@ -111,7 +126,6 @@ function Table() {
                 </div>
                 <div className='team-m-parent'>
                 {sortedTeamsData.map((team, index) => (
-                    // [۲. اضافه کردن کلاس شرطی]: اگر تیم حذف شده بود، کلاس 'eliminated' اضافه می‌شود
                     <div className={`team-m ${team.is_eliminated === 1 ? 'eliminated' : ''}`} key={team.id} style={{ display: 'flex', alignItems: 'center'}}>
                         <div className='table-inner-element team-rank-side column-rank'>{index + 1}</div>
                         <div className='table-inner-element team-team-side column-team'>
@@ -121,7 +135,6 @@ function Table() {
                             </div>
                             <div className='table-inner-element team-name-m'>
                                 <span className='team-name-tb' title={team.name.toUpperCase()}>
-                                    {/* [اصلاح]: حالا نام مخفف (تگ) تیم نمایش داده می‌شود */}
                                     {team.initial.toUpperCase()}
                                 </span>
                             </div>
