@@ -1,0 +1,89 @@
+/* src/components/MatchSelector.css */
+
+body {
+    background-color: #1e272e; /* رنگ پس‌زمینه تیره برای کل صفحه */
+    color: #ecf0f1;
+    font-family: sans-serif;
+    padding: 20px;
+}
+
+.match-selector-container {
+    max-width: 600px;
+    margin: 40px auto;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.card {
+    background-color: #2c3e50; /* رنگ کارت‌ها مشابه پنل ادمین */
+    padding: 25px;
+    border-radius: 8px;
+    border: 1px solid #34495e;
+}
+
+.card h2 {
+    margin-top: 0;
+    color: #ecf0f1;
+    border-bottom: 2px solid #3498db;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+.create-match-form {
+    display: flex;
+    gap: 10px;
+}
+
+.create-match-form input[type="text"] {
+    flex-grow: 1;
+    padding: 12px;
+    border-radius: 5px;
+    border: 1px solid #7f8c8d;
+    background-color: #34495e;
+    color: #ecf0f1;
+    font-size: 1rem;
+}
+
+.create-match-form input[type="text"]::placeholder {
+    color: #95a5a6;
+}
+
+.create-match-form button, .match-button {
+    padding: 12px 20px;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: bold;
+    transition: background-color 0.2s;
+}
+
+.create-button {
+    background-color: #27ae60; /* رنگ سبز برای ساختن */
+    color: white;
+}
+
+.create-button:hover {
+    background-color: #2ecc71;
+}
+
+.match-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.match-button {
+    background-color: #3498db; /* رنگ آبی مشابه دکمه‌های دیگر */
+    color: white;
+    text-align: left;
+}
+
+.match-button:hover {
+    background-color: #5dade2;
+}
+
+.card p {
+    color: #bdc3c7;
+}

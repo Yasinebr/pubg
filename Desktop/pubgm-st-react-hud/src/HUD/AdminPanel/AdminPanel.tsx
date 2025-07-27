@@ -1,195 +1,223 @@
-import { io } from "socket.io-client";
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { io } from "socket.io-client";
+import { useMatch } from '../../contexts/MatchContext';
+import { useNavigate } from 'react-router-dom'; // [۱] ایمپورت کردن useNavigate
+
 import './AdminPanel.css';
 
-// این interface را کمی کامل‌تر کردم تا با داده‌های شما هماهنگ باشد
 interface Team {
   id: number;
   name: string;
   initial: string;
-  logo_data: string;
+  logo: string;
 }
 
 export const AdminPanel: React.FC = () => {
-  const [teams, setTeams] = useState<Team[]>([]);
+    // [۲] گرفتن هر دو مقدار مورد نیاز از هوک‌ها
+    const { selectedMatchId, setSelectedMatchId } = useMatch();
+    const navigate = useNavigate();
 
-  // State برای فرم ویرایش تیم‌های موجود
-  const [teamNameInputs, setTeamNameInputs] = useState<{ [key: number]: string }>({});
-  const [teamLogoFiles, setTeamLogoFiles] = useState<{ [key: number]: File | null }>({});
+    const [teams, setTeams] = useState<Team[]>([]);
+    const [teamNameInputs, setTeamNameInputs] = useState<{ [key: number]: string }>({});
+    const [teamLogoFiles, setTeamLogoFiles] = useState<{ [key: number]: File | null }>({});
+    const [newTeamName, setNewTeamName] = useState('');
+    const [newTeamInitial, setNewTeamInitial] = useState('');
+    const [newTeamLogo, setNewTeamLogo] = useState<File | null>(null);
 
-  // --- شروع بخش جدید: State برای فرم افزودن تیم ---
-  const [newTeamName, setNewTeamName] = useState('');
-  const [newTeamInitial, setNewTeamInitial] = useState('');
-  const [newTeamLogo, setNewTeamLogo] = useState<File | null>(null);
-  // --- پایان بخش جدید ---
 
-  // این تابع مسئول گرفتن لیست جدید تیم‌ها از سرور است
-  const fetchTeams = () => {
-    axios.get(`${process.env.REACT_APP_API_URL}/api/team_data`)
-      .then(response => {
-        setTeams(response.data);
-      })
-      .catch(console.error);
-  };
+    useEffect(() => {
+        if (!selectedMatchId) {
+            setTeams([]);
+            return;
+        }
 
-  useEffect(() => {
-    const socket = io(process.env.REACT_APP_SOCKET_URL!);
+        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
-    // به پیغام 'teamDataUpdated' که از سرور می‌آید، گوش می‌دهیم
-    socket.on('teamDataUpdated', () => {
-        console.log('AdminPanel received teamDataUpdated event. Refetching teams...');
-        // وقتی خبری از سرور رسید، داده‌ها را دوباره می‌گیریم
+        const fetchTeams = () => {
+            axios.get(`${apiUrl}/api/teams/${selectedMatchId!}`)
+              .then(response => setTeams(response.data))
+              .catch(console.error);
+        };
+
         fetchTeams();
-    });
 
-    // تابع پاک‌سازی برای جلوگیری از مشکل حافظه
-    return () => {
-        socket.disconnect();
+        const socket = io(process.env.REACT_APP_SOCKET_URL || 'http://localhost:3001');
+        socket.emit('joinMatch', selectedMatchId);
+
+        // [اصلاح نهایی]: مقایسه با == برای آپدیت لحظه‌ای صحیح
+        const handleDataUpdate = (data: { match_id: any }) => {
+            if (data.match_id == selectedMatchId) {
+                fetchTeams();
+            }
+        };
+
+        socket.on('dataUpdated', handleDataUpdate);
+        socket.on('teamDataUpdated', handleDataUpdate);
+
+        return () => {
+            socket.off('dataUpdated', handleDataUpdate);
+            socket.off('teamDataUpdated', handleDataUpdate);
+            socket.disconnect();
+        };
+    }, [selectedMatchId]);
+
+    const handleAddTeam = async () => {
+        if (!selectedMatchId) return alert('Please select a match first.');
+        if (!newTeamName || !newTeamInitial || !newTeamLogo) return alert('Please fill all fields.');
+
+        const formData = new FormData();
+        formData.append('team_name', newTeamName);
+        formData.append('team_initial', newTeamInitial);
+        formData.append('logo_file', newTeamLogo);
+
+        try {
+            const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+            await axios.post(`${apiUrl}/api/admin/add-team/${selectedMatchId}`, formData);
+            alert('Team added successfully!');
+            setNewTeamName('');
+            setNewTeamInitial('');
+            setNewTeamLogo(null);
+            const fileInput = document.getElementById('new-team-logo-input') as HTMLInputElement;
+            if (fileInput) fileInput.value = '';
+        } catch (error) {
+            console.error(error);
+            alert('Failed to add team.');
+        }
     };
-}, []); // [] یعنی این افکت فقط یک بار اجرا می‌شود
 
+    const handleDeleteAllMatches = async () => {
+        if (window.confirm("Are you sure you want to delete ALL matches? This action is irreversible!")) {
+            try {
+                const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+                await axios.post(`${apiUrl}/api/matches/delete-all`);
 
-  useEffect(() => {
-    fetchTeams(); // در اولین بار داده‌ها را می‌گیریم
-  }, []);
+                alert('All matches were successfully deleted!');
 
-  // --- شروع توابع جدید برای افزودن و حذف ---
+                // مچ فعلی را از حافظه پاک می‌کنیم
+                setSelectedMatchId(null);
+                // کاربر را به صفحه انتخاب مچ (که حالا خالی است) هدایت می‌کنیم
+                navigate('/matches');
 
-  const handleAddTeam = async () => {
-    if (!newTeamName || !newTeamInitial || !newTeamLogo) {
-      return alert('Please fill all fields for the new team.');
+            } catch (error) {
+                alert('Error deleting all matches.');
+                console.error(error);
+            }
+        }
+    };
+
+    if (!selectedMatchId) {
+        return <div style={{ padding: '20px', textAlign: 'center' }}>Please select a match to manage teams.</div>;
     }
-    const formData = new FormData();
-    formData.append('team_name', newTeamName);
-    formData.append('team_initial', newTeamInitial);
-    formData.append('logo_file', newTeamLogo);
 
-    try {
-      // فقط درخواست افزودن تیم را به سرور ارسال کنید.
-      await axios.post(`${process.env.REACT_APP_API_URL}/api/admin/add-team`, formData);
-      alert('Team added successfully!');
-      // fetchTeams(); // <<<<<<< این خط برای جلوگیری از آپدیت دوگانه و مشکل تکراری شدن، حذف شد.
+    const handleDeleteTeam = async (teamId: number) => {
+        if (!selectedMatchId) return alert('Please select a match first.');
+        if (window.confirm(`Are you sure you want to delete team with ID ${teamId}?`)) {
+            try {
+                const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+                await axios.post(`${apiUrl}/api/admin/delete-team/${selectedMatchId}`, {
+                    data: { team_id: teamId }
+                });
+                alert('Team deleted successfully!');
+            } catch (error) {
+                console.error(error);
+                alert('Failed to delete team.');
+            }
+        }
+    };
 
-      // فرم را خالی می‌کنیم
-      setNewTeamName('');
-      setNewTeamInitial('');
-      setNewTeamLogo(null);
-      // برای خالی کردن input file
-      const fileInput = document.getElementById('new-team-logo-input') as HTMLInputElement;
-      if (fileInput) fileInput.value = '';
+    // ... توابع handleUpdateName و handleUpdateLogo نیز بدون تغییر باقی می‌مانند ...
+    const handleUpdateName = async (teamId: number) => {
+        if (!selectedMatchId) return alert('Please select a match first.');
+        const newName = teamNameInputs[teamId];
+        if (!newName) return alert('Please enter a new name.');
 
-    } catch (error) {
-      alert('Failed to add team.');
-      console.error(error);
+        try {
+            const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+            await axios.post(`${apiUrl}/api/admin/update-name/${selectedMatchId}`, {
+                data: { team_id: teamId, new_name: newName }
+            });
+            alert('Team name updated successfully!');
+        } catch (error) {
+            console.error(error);
+            alert('Failed to update name.');
+        }
+    };
+
+    const handleUpdateLogo = async (teamId: number) => {
+        if (!selectedMatchId) return alert('Please select a match first.');
+        const logoFile = teamLogoFiles[teamId];
+        if (!logoFile) return alert('Please select a logo file.');
+
+        const formData = new FormData();
+        formData.append('team_id', teamId.toString());
+        formData.append('logo_file', logoFile);
+
+        try {
+            const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+            await axios.post(`${apiUrl}/api/admin/update-logo/${selectedMatchId}`, formData);
+            alert('Logo updated successfully!');
+        } catch (error) {
+            console.error(error);
+            alert('Failed to update logo.');
+        }
+    };
+
+    if (!selectedMatchId) {
+        return <div style={{ padding: '20px', textAlign: 'center' }}>Please select a match to manage teams.</div>;
     }
-};
 
-  const handleDeleteTeam = async (teamId: number) => {
-  // از کاربر تایید می‌گیریم
-  if (window.confirm(`Are you sure you want to delete team with ID ${teamId}? This action cannot be undone.`)) {
-    try {
-      // فقط درخواست حذف را به سرور ارسال کنید و تمام.
-      await axios.post(`${process.env.REACT_APP_API_URL}/api/admin/delete-team`, {
-        data: { team_id: teamId }
-      });
-      alert('Team deleted successfully!');
-      // fetchTeams(); // <<<<<<< این خط حذف شد تا از آپدیت دوگانه جلوگیری شود.
-    } catch (error) {
-      alert('Failed to delete team.');
-      console.error(error);
-    }
-  }
-};
+     return (
+        <div className="admin-panel">
+            <h1>Team Admin Panel (Match ID: {selectedMatchId})</h1>
+            <div className="grid-container">
+                <div className="team-edit-card add-team-card">
+                    <h4>Add New Team</h4>
+                    <div className="form-group">
+                        <input type="text" placeholder="New Team Name" value={newTeamName} onChange={(e) => setNewTeamName(e.target.value)} />
+                        <input type="text" placeholder="Initial (e.g., TSM)" value={newTeamInitial} onChange={(e) => setNewTeamInitial(e.target.value)} style={{maxWidth: '150px'}} />
+                    </div>
+                    <div className="form-group">
+                        <input type="file" id="new-team-logo-input" onChange={(e) => setNewTeamLogo(e.target.files ? e.target.files[0] : null)} />
+                        <button onClick={handleAddTeam} style={{backgroundColor: '#2ecc71'}}>Create Team</button>
+                    </div>
+                </div>
 
-
-  const handleUpdateName = async (teamId: number) => {
-    const newName = teamNameInputs[teamId];
-    if (!newName) {
-      alert('Please enter a new name.');
-      return;
-    }
-    try {
-      // فقط درخواست آپدیت را به سرور ارسال کنید.
-      await axios.post(`${process.env.REACT_APP_API_URL}/api/admin/update-name`, {
-        data: { team_id: teamId, new_name: newName }
-      });
-      alert('Team name updated successfully!');
-      // fetchTeams(); // <<<<<<< این خط برای جلوگیری از آپدیت دوگانه حذف شد.
-    } catch (error) {
-      alert('Failed to update name.');
-      console.error(error);
-    }
-};
-
-  const handleUpdateLogo = async (teamId: number) => {
-    const logoFile = teamLogoFiles[teamId];
-    if (!logoFile) {
-      alert('Please select a logo file.');
-      return;
-    }
-    const formData = new FormData();
-    formData.append('team_id', teamId.toString());
-    formData.append('logo_file', logoFile);
-
-    try {
-      // Only send the update request to the server.
-      await axios.post(`${process.env.REACT_APP_API_URL}/api/admin/update-logo`, formData);
-      alert('Logo updated successfully!');
-      // fetchTeams(); // <<<<<<< This line was removed to prevent a double update.
-    } catch (error) {
-      alert('Failed to update logo.');
-      console.error(error);
-  }
-};
-
-
-  return (
-    <div className="admin-panel">
-      <h1>Team Admin Panel</h1>
-
-      {/* بخش افزودن تیم جدید */}
-      <div className="team-edit-card add-team-card">
-        <h4>Add New Team</h4>
-        <div className="form-group">
-          <input type="text" placeholder="New Team Name" value={newTeamName} onChange={(e) => setNewTeamName(e.target.value)} />
-          <input type="text" placeholder="Initial (e.g., TSM)" value={newTeamInitial} onChange={(e) => setNewTeamInitial(e.target.value)} style={{maxWidth: '150px'}} />
+                <div className="team-edit-card danger-zone">
+                    <h4>Danger Zone</h4>
+                    <button onClick={handleDeleteAllMatches} className="delete-all-button">
+                        Delete All Matches
+                    </button>
+                </div>
+            </div>
+            <hr style={{margin: '40px 0', borderColor: '#34495e'}} />
+            <h2>Edit Existing Teams</h2>
+            {teams.map((team) => (
+                <div key={team.id} className="team-edit-card">
+                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                        <h4>{team.name} (ID: {team.id})</h4>
+                        <button onClick={() => handleDeleteTeam(team.id)} style={{backgroundColor: '#e74c3c'}}>Delete Team</button>
+                    </div>
+                    <div className="form-group">
+                        <input
+                            type="text"
+                            placeholder="Enter new name..."
+                            onChange={(e) => setTeamNameInputs(prev => ({...prev, [team.id]: e.target.value}))}
+                        />
+                        <button onClick={() => handleUpdateName(team.id)}>Update Name</button>
+                    </div>
+                    <div className="form-group">
+                        <input
+                            type="file"
+                            onChange={(e) => setTeamLogoFiles(prev => ({
+                                ...prev,
+                                [team.id]: e.target.files ? e.target.files[0] : null
+                            }))}
+                        />
+                        <button onClick={() => handleUpdateLogo(team.id)}>Update Logo</button>
+                    </div>
+                </div>
+            ))}
         </div>
-        <div className="form-group">
-          <input type="file" id="new-team-logo-input" onChange={(e) => setNewTeamLogo(e.target.files ? e.target.files[0] : null)} />
-          <button onClick={handleAddTeam} style={{backgroundColor: '#2ecc71'}}>Create Team</button>
-        </div>
-      </div>
-
-      <hr style={{margin: '40px 0', borderColor: '#34495e'}} />
-
-      <h2>Edit Existing Teams</h2>
-      {/* لیست تیم‌های موجود */}
-      {teams.map((team, index) => (
-        <div key={team.id} className="team-edit-card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h4>{team.name} (ID: {team.id})</h4>
-            <button onClick={() => handleDeleteTeam(team.id)} style={{backgroundColor: '#e74c3c'}}>Delete Team</button>
-          </div>
-
-          <div className="form-group">
-            <input
-              type="text"
-              placeholder="Enter new name..."
-              onChange={(e) => setTeamNameInputs(prev => ({ ...prev, [team.id]: e.target.value }))}
-            />
-            <button onClick={() => handleUpdateName(team.id)}>Update Name</button>
-          </div>
-
-          <div className="form-group">
-            <input
-              type="file"
-              onChange={(e) => setTeamLogoFiles(prev => ({ ...prev, [team.id]: e.target.files ? e.target.files[0] : null }))}
-            />
-            <button onClick={() => handleUpdateLogo(team.id)}>Update Logo</button>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
+    );
 };

@@ -239,3 +239,31 @@
         color: #a0a0a0;
     }
 }
+
+.grid-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* دو ستون با عرض برابر */
+    gap: 20px; /* فاصله بین دو بخش */
+    align-items: start; /* تراز کردن آیتم‌ها به سمت بالا */
+}
+
+.danger-zone {
+    background-color: #442c2c;
+    border: 1px solid #e74c3c;
+}
+
+.delete-all-button {
+    width: 100%;
+    padding: 10px;
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.2s;
+}
+
+.delete-all-button:hover {
+    background-color: #c0392b;
+}

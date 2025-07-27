@@ -399,3 +399,9 @@
     display: block !important;
     text-align: center !important;
 }
+
+.team-m.eliminated {
+    background-color: rgba(192, 57, 43, 0.6) !important; /* رنگ قرمز تیره با شفافیت */
+    text-decoration: line-through; /* خط روی متن */
+    opacity: 0.6;
+}

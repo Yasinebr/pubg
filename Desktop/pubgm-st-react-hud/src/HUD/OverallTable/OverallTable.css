@@ -1,0 +1,65 @@
+/* src/HUD/OverallTable/OverallTable.css */
+
+.overall-standings-page {
+    padding: 20px;
+    font-family: sans-serif;
+}
+
+.overall-standings-page h1 {
+    text-align: center;
+    color: #ecf0f1;
+    margin-bottom: 30px;
+}
+
+.overall-standings-page .two-column-layout {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    max-width: 1400px;
+    margin: auto;
+}
+
+.overall-standings-page .table-column {
+    flex: 1;
+    min-width: 0;
+    max-width: 700px;
+}
+
+.overall-standings-page .table-header-m,
+.overall-standings-page .team-m {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 10px;
+    border-bottom: 1px solid rgba(127, 140, 141, 0.3);
+}
+
+.overall-standings-page .table-header-m {
+    background-color: transparent !important;
+    color: #bdc3c7;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+.overall-standings-page .team-m {
+    background-color: transparent !important;
+    color: #ecf0f1;
+}
+
+.overall-standings-page .column-rank { flex: 0 0 50px; text-align: center; }
+.overall-standings-page .column-team { flex: 1 1 50%; }
+.overall-standings-page .column-stats { flex: 0 0 80px; text-align: center; font-weight: bold; }
+
+.overall-standings-page .team-team-side { display: flex; align-items: center; }
+.overall-standings-page .team-logo-m { width: 40px; height: 30px; margin-right: 15px; flex-shrink: 0; }
+.overall-standings-page .team-logo { width: 100%; height: 100%; object-fit: contain; }
+.overall-standings-page .team-name-m { font-weight: bold; }
+
+/* این کد را به انتهای فایل OverallTable.css اضافه کنید */
+
+.overall-standings-page .table-header-m .column-team {
+    /* 55px = 40px عرض لوگو + 15px فاصله راست آن
+       این کار عنوان را به سمت راست هل می‌دهد تا با نام تیم‌ها تراز شود
+    */
+    padding-left: 55px;
+}

@@ -12,3 +12,5 @@ export interface teamPointsRow {
 };
 
 
+export class TeamQueryResult {
+}

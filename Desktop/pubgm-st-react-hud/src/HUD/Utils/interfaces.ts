@@ -34,3 +34,7 @@ export interface TeamElims {
     team_id: number,
     team_elims: number
 };
+export interface TeamQueryResult {
+  name: string;
+  logo: string;
+}

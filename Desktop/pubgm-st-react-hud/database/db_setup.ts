@@ -1,49 +1,71 @@
-import sqlite3 from 'sqlite3';
-import teamData from '../team_data/config.json';
+// database/db_setup.ts
 
-// آدرس صحیح پایگاه داده
-const db = new sqlite3.Database('./database/database.db', (err) => {
+// database/db_setup.ts
+
+import sqlite3 from 'sqlite3';
+import path from 'path';
+
+const dbPath = path.join(__dirname, 'database.db');
+const db = new sqlite3.Database(dbPath, (err) => {
     if (err) {
-        return console.error('Error opening database', err.message);
+        console.error("Error creating database file:", err.message);
+    } else {
+        console.log("Database file created successfully at:", dbPath);
     }
-    console.log('Connected to the SQLite database.');
 });
 
 db.serialize(() => {
-    const createTableQuery = `
+    // فعال کردن Foreign Key constraints
+    db.exec("PRAGMA foreign_keys = ON;", (err) => {
+        if (err) {
+            console.error("Error enabling foreign keys:", err.message);
+        } else {
+            console.log("Foreign keys enabled successfully.");
+        }
+    });
+
+    const createTablesQuery = `
+    CREATE TABLE IF NOT EXISTS matches (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS teams (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        match_id INTEGER NOT NULL,
+        name TEXT NOT NULL,
+        initial TEXT,
+        logo TEXT,
+        FOREIGN KEY (match_id) REFERENCES matches (id) ON DELETE CASCADE
+    );
+
     CREATE TABLE IF NOT EXISTS team_points (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        team_id INTEGER UNIQUE,
+        match_id INTEGER NOT NULL,
+        team_id INTEGER NOT NULL,
         team_points INTEGER DEFAULT 0,
-        team_elms INTEGER DEFAULT 0
-    )`;
+        team_elms INTEGER DEFAULT 0,
+        is_eliminated INTEGER DEFAULT 0, -- [اصلاح کلیدی]: این ستون اضافه شد
+        FOREIGN KEY (team_id) REFERENCES teams (id) ON DELETE CASCADE,
+        FOREIGN KEY (match_id) REFERENCES matches (id) ON DELETE CASCADE
+    );
+    `;
 
-    db.run(createTableQuery, (err) => {
+    db.exec(createTablesQuery, (err) => {
         if (err) {
-            return console.error('Error creating table', err.message);
+            console.error("Error creating tables:", err.message);
+        } else {
+            console.log("Tables created successfully.");
         }
-        console.log('Table "team_points" created or already exists.');
-
-        const insertStmt = db.prepare('INSERT OR IGNORE INTO team_points (team_id, team_points, team_elms) VALUES (?, ?, ?)');
-
-        for (let i = 0; i < teamData.team_data.length; i++) {
-            insertStmt.run(i + 1, 0, 0);
-        }
-
-        // فقط بعد از اینکه آخرین دستور تمام شد، دیتابیس را می‌بندیم
-        insertStmt.finalize((err) => {
-            if (err) {
-                return console.error('Error inserting data', err.message);
+        db.close((closeErr) => {
+            if (closeErr) {
+                console.error("Error closing database:", closeErr.message);
+            } else {
+                console.log("Database connection closed.");
             }
-            console.log('Data insertion complete.');
-
-            // <<<<< دستور بستن به اینجا منتقل شد
-            db.close((err) => {
-                if (err) {
-                    return console.error('Error closing database', err.message);
-                }
-                console.log('Closed the database connection.');
-            });
         });
     });
 });
+
+export { dbPath };
