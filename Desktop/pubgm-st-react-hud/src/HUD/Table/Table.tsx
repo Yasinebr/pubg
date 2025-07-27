@@ -45,7 +45,7 @@ function Table() {
 
         const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
         const fetchMatchData = async () => {
-            setIsLoading(true);
+            //setIsLoading(true);
             try {
                 const [teamsRes, pointsRes] = await Promise.all([
                     fetch(`${apiUrl}/api/teams/${activeMatchId}`),
