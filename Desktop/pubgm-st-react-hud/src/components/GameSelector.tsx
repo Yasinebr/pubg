@@ -1,8 +1,7 @@
-// src/components/GameSelector.tsx
-
 import React, { useState, useEffect } from 'react';
 import { useGame } from '../contexts/GameContext';
-import { useNavigate } from 'react-router-dom'; // [۱] ایمپورت کردن هوک useNavigate
+import { useNavigate } from 'react-router-dom';
+import io from 'socket.io-client'; // [۱] ایمپورت کردن io
 import './GameSelector.css';
 
 interface Game {
@@ -13,7 +12,7 @@ interface Game {
 const GameSelector: React.FC = () => {
     const [games, setGames] = useState<Game[]>([]);
     const [newGameName, setNewGameName] = useState('');
-    const { selectedGameId, selectGame } = useGame(); // selectedGameId را هم می‌گیریم
+    const { selectedGameId, selectGame } = useGame();
     const navigate = useNavigate();
     const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
@@ -25,7 +24,20 @@ const GameSelector: React.FC = () => {
     };
 
     useEffect(() => {
-        fetchGames();
+        fetchGames(); // گرفتن لیست در اولین بارگذاری
+
+        // [۲] اتصال به سوکت و گوش دادن به رویدادها
+        const socket = io(process.env.REACT_APP_SOCKET_URL || 'http://localhost:3001');
+
+        // هر زمان که پیامی با نام 'gamesUpdated' از سرور آمد، لیست را دوباره بگیر
+        socket.on('gamesUpdated', () => {
+            fetchGames();
+        });
+
+        // قطع اتصال در زمان خروج از کامپوننت
+        return () => {
+            socket.disconnect();
+        };
     }, []);
 
     const handleCreateGame = async (e: React.FormEvent) => {

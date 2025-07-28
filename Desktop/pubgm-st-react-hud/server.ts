@@ -36,13 +36,21 @@ const io = new Server(server, {
   }
 });
 
-const dbPath = path.join(__dirname, '..', 'database', 'database.db');
+const dbPath = path.join(__dirname, 'database', 'database.db');
 const db = new sqlite3.Database(dbPath, (err) => {
     if (err) {
-        console.error("Error opening database from path:", dbPath, err.message);
+        console.error("Error opening database:", err.message);
     } else {
         console.log("Database connected successfully from path:", dbPath);
-        db.exec('PRAGMA foreign_keys = ON;'); // فعال کردن کلید خارجی
+
+        // [اصلاح کلیدی]: فعال کردن کلید خارجی برای این اتصال
+        db.exec('PRAGMA foreign_keys = ON;', (err) => {
+            if (err) {
+                console.error("Error enabling foreign keys:", err.message);
+            } else {
+                console.log("Foreign keys enabled for this connection.");
+            }
+        });
     }
 });
 
