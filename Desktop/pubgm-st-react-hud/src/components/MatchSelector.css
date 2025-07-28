@@ -87,3 +87,103 @@ body {
 .card p {
     color: #bdc3c7;
 }
+
+/* Style for each item in the match list to align buttons */
+.match-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    gap: 10px;
+}
+
+.match-item .select-button {
+    flex-grow: 1; /* Makes the main select button take up more space */
+}
+
+/* Style for the new "Copy Teams" button */
+.copy-button {
+    padding: 10px 15px;
+    background-color: #f0ad4e; /* Orange color */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    flex-shrink: 0; /* Prevents the button from shrinking */
+}
+
+.copy-button:hover {
+    background-color: #ec971f;
+}
+
+.copy-button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+
+/* Styles for the pop-up modal */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: #2c2c2c; /* Dark color for the content box */
+    padding: 25px;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    color: #f0f0f0;
+}
+
+.modal-content h3 {
+    margin-top: 0;
+    border-bottom: 1px solid #444;
+    padding-bottom: 10px;
+}
+
+.modal-select {
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+    border: 1px solid #555;
+    background-color: #333;
+    color: white;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.modal-button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.modal-button.confirm {
+    background-color: #5cb85c; /* Green */
+    color: white;
+}
+
+.modal-button.cancel {
+    background-color: #d9534f; /* Red */
+    color: white;
+}

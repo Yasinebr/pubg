@@ -317,6 +317,83 @@ app.get('/api/team_elims/:match_id', (req, res) => {
     });
 });
 
+app.post('/api/matches/copy-teams', async (req: Request, res: Response) => {
+    const { sourceMatchId, destinationMatchId } = req.body;
+
+    if (!sourceMatchId || !destinationMatchId) {
+        return res.status(400).json({ error: 'Source and destination match IDs are required.' });
+    }
+
+    try {
+        // 1. Get all teams from the source match.
+        const teamsToCopy: any[] = await new Promise((resolve, reject) => {
+            db.all('SELECT name, initial, logo FROM teams WHERE match_id = ?', [sourceMatchId], (err: Error | null, rows: any[]) => {
+                if (err) return reject(err);
+                resolve(rows);
+            });
+        });
+
+        if (teamsToCopy.length === 0) {
+            return res.status(404).json({ error: 'No teams found in the source match.' });
+        }
+
+        // 2. Start a database transaction to ensure all or nothing is committed.
+        await new Promise<void>((resolve, reject) => {
+            db.run('BEGIN TRANSACTION', (err: Error | null) => err ? reject(err) : resolve());
+        });
+
+        const teamStmt = db.prepare('INSERT INTO teams (match_id, name, initial, logo) VALUES (?, ?, ?, ?)');
+        const pointsStmt = db.prepare('INSERT INTO team_points (match_id, team_id, team_points, team_elms, is_eliminated) VALUES (?, ?, 0, 0, 0)');
+
+        // Use a for...of loop which works correctly with await.
+        for (const team of teamsToCopy) {
+            // Insert the team and get its new ID.
+            const newTeamId = await new Promise<number>((resolve, reject) => {
+                // Explicitly type `this` and `err` to satisfy TypeScript.
+                teamStmt.run(destinationMatchId, team.name, team.initial, team.logo, function(this: sqlite3.RunResult, err: Error | null) {
+                    if (err) return reject(err);
+                    // `this` now correctly refers to the RunResult, which has lastID.
+                    resolve(this.lastID);
+                });
+            });
+
+            // Insert the initial points for the new team.
+            await new Promise<void>((resolve, reject) => {
+                // Here we don't need `this`, so an arrow function is fine. Just type `err`.
+                pointsStmt.run(destinationMatchId, newTeamId, (err: Error | null) => {
+                    if (err) return reject(err);
+                    resolve();
+                });
+            });
+        }
+
+        // Finalize the prepared statements.
+        teamStmt.finalize();
+        pointsStmt.finalize();
+
+        // 3. If all insertions were successful, commit the transaction.
+        await new Promise<void>((resolve, reject) => {
+            db.run('COMMIT', (err: Error | null) => err ? reject(err) : resolve());
+        });
+
+        // 4. Send success response and notify clients.
+        io.emit('teamDataUpdated', { match_id: destinationMatchId });
+        res.status(200).json({ message: `${teamsToCopy.length} teams copied successfully.` });
+
+    } catch (error: any) {
+        // If any error occurs, roll back the entire transaction.
+        db.run('ROLLBACK', (rollbackErr: Error | null) => {
+            if (rollbackErr) {
+                console.error("Fatal: Error rolling back transaction:", rollbackErr.message);
+            }
+        });
+        console.error("Error copying teams (Transaction Rolled Back):", error.message);
+        res.status(500).json({ error: 'Failed to copy teams. The operation was cancelled.' });
+    }
+});
+
+
+
 // ## Admin Routes (Refactored to use Database ONLY) ##
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
