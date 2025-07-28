@@ -1,7 +1,5 @@
 // database/db_setup.ts
 
-// database/db_setup.ts
-
 import sqlite3 from 'sqlite3';
 import path from 'path';
 
@@ -15,20 +13,23 @@ const db = new sqlite3.Database(dbPath, (err) => {
 });
 
 db.serialize(() => {
-    // فعال کردن Foreign Key constraints
-    db.exec("PRAGMA foreign_keys = ON;", (err) => {
-        if (err) {
-            console.error("Error enabling foreign keys:", err.message);
-        } else {
-            console.log("Foreign keys enabled successfully.");
-        }
-    });
+    db.exec("PRAGMA foreign_keys = ON;");
 
     const createTablesQuery = `
-    CREATE TABLE IF NOT EXISTS matches (
+    -- [جدید]: ساخت جدول برای بازی‌ها (تورنومنت‌ها)
+    CREATE TABLE IF NOT EXISTS games (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS matches (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        game_id INTEGER NOT NULL, -- [اصلاح]: این ستون برای اتصال به بازی اضافه شد
+        name TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        -- [اصلاح]: با حذف یک بازی، تمام مچ‌های آن هم حذف می‌شوند
+        FOREIGN KEY (game_id) REFERENCES games (id) ON DELETE CASCADE
     );
 
     CREATE TABLE IF NOT EXISTS teams (
@@ -46,7 +47,7 @@ db.serialize(() => {
         team_id INTEGER NOT NULL,
         team_points INTEGER DEFAULT 0,
         team_elms INTEGER DEFAULT 0,
-        is_eliminated INTEGER DEFAULT 0, -- [اصلاح کلیدی]: این ستون اضافه شد
+        is_eliminated INTEGER DEFAULT 0,
         FOREIGN KEY (team_id) REFERENCES teams (id) ON DELETE CASCADE,
         FOREIGN KEY (match_id) REFERENCES matches (id) ON DELETE CASCADE
     );
@@ -67,5 +68,3 @@ db.serialize(() => {
         });
     });
 });
-
-export { dbPath };

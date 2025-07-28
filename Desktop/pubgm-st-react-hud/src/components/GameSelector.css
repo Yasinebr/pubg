@@ -1,0 +1,108 @@
+/* src/components/GameSelector.css */
+.game-selector-container {
+    max-width: 600px;
+    margin: 40px auto;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.card {
+    background-color: #2c3e50;
+    padding: 25px;
+    border-radius: 8px;
+    border: 1px solid #34495e;
+}
+
+.card h2 {
+    margin-top: 0;
+    color: #ecf0f1;
+    border-bottom: 2px solid #3498db;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+.create-form {
+    display: flex;
+    gap: 10px;
+}
+
+.create-form input[type="text"] {
+    flex-grow: 1;
+    padding: 12px;
+    border-radius: 5px;
+    border: 1px solid #7f8c8d;
+    background-color: #34495e;
+    color: #ecf0f1;
+    font-size: 1rem;
+}
+
+.create-form input[type="text"]::placeholder {
+    color: #95a5a6;
+}
+
+.create-form button, .select-button {
+    padding: 12px 20px;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: bold;
+    transition: background-color 0.2s;
+}
+
+.create-button {
+    background-color: #27ae60;
+    color: white;
+}
+
+.create-button:hover {
+    background-color: #2ecc71;
+}
+
+.list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.select-button {
+    background-color: #3498db;
+    color: white;
+    text-align: left;
+}
+
+.select-button:hover {
+    background-color: #5dade2;
+}
+
+.card p {
+    color: #bdc3c7;
+}
+
+/* این کد را به انتهای فایل GameSelector.css اضافه کنید */
+
+.list-item {
+    display: flex;
+    gap: 10px; /* فاصله بین دکمه انتخاب و حذف */
+}
+
+.list-item .select-button {
+    flex-grow: 1; /* دکمه انتخاب تمام فضای باقی‌مانده را می‌گیرد */
+}
+
+.delete-button {
+    padding: 12px 20px;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: bold;
+    transition: background-color 0.2s;
+    background-color: #c0392b; /* رنگ قرمز */
+    color: white;
+}
+
+.delete-button:hover {
+    background-color: #e74c3c;
+}

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { useGame } from '../../contexts/GameContext';
 import { useMatch } from '../../contexts/MatchContext';
 import io from 'socket.io-client';
 
@@ -26,6 +27,7 @@ function Table() {
     // گرفتن ID از هر دو منبع: URL و Context
     const { matchId: paramMatchId } = useParams<{ matchId: string }>();
     const { selectedMatchId: contextMatchId } = useMatch();
+    const { selectedGameId } = useGame();
 
     // اولویت با ID موجود در URL است، در غیر این صورت از Context استفاده کن
     const activeMatchId = paramMatchId || contextMatchId;
@@ -33,19 +35,34 @@ function Table() {
     const [teams, setTeams] = useState<Team[]>([]);
     const [points, setPoints] = useState<TeamPoints[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [gameName, setGameName] = useState('');
 
     useEffect(() => {
-        // تمام منطق حالا بر اساس activeMatchId کار می‌کند
-        if (!activeMatchId) {
-            setIsLoading(false);
-            setTeams([]);
-            setPoints([]);
-            return;
-        }
-
         const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+
+        // تابع برای گرفتن نام بازی
+        //const fetchGameName = async () => {
+          //  if (selectedGameId) {
+            //    try {
+              //      const response = await fetch(`${apiUrl}/api/games/${selectedGameId}`);
+                ///    if (!response.ok) return;
+                   // const data = await response.json();
+                   // setGameName(data.name);
+              //  } catch (error) {
+                ///    console.error("Failed to fetch game name:", error);
+                //}
+        ///    }
+       // };
+
+        // تابع برای گرفتن داده‌های مچ
         const fetchMatchData = async () => {
-            //setIsLoading(true);
+            if (!activeMatchId) {
+                setIsLoading(false);
+                setTeams([]);
+                setPoints([]);
+                return;
+            }
+            // setIsLoading(true); // این خط برای جلوگیری از چشمک زدن کامنت شد
             try {
                 const [teamsRes, pointsRes] = await Promise.all([
                     fetch(`${apiUrl}/api/teams/${activeMatchId}`),
@@ -62,24 +79,23 @@ function Table() {
             }
         };
 
+        //fetchGameName();
         fetchMatchData();
 
         const socket = io(process.env.REACT_APP_SOCKET_URL || 'http://localhost:3001');
-        socket.emit('joinMatch', activeMatchId);
-
-        const handleDataUpdate = (data: { match_id: any }) => {
-            if (data.match_id == activeMatchId) fetchMatchData();
-        };
-
-        socket.on('dataUpdated', handleDataUpdate);
-        socket.on('teamDataUpdated', handleDataUpdate);
+        if (activeMatchId) {
+            socket.emit('joinMatch', activeMatchId);
+            const handleDataUpdate = (data: { match_id: any }) => {
+                if (data.match_id == activeMatchId) fetchMatchData();
+            };
+            socket.on('dataUpdated', handleDataUpdate);
+            socket.on('teamDataUpdated', handleDataUpdate);
+        }
 
         return () => {
-            socket.off('dataUpdated', handleDataUpdate);
-            socket.off('teamDataUpdated', handleDataUpdate);
             socket.disconnect();
         };
-    }, [activeMatchId]);
+    }, [activeMatchId, selectedGameId]);
 
     if (isLoading) {
         return <div style={{ color: 'white', textAlign: 'center', paddingTop: '20px' }}>Loading Data...</div>;

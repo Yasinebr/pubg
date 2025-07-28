@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useParams, Link } from 'react-router-dom'; // [۱] ایمپورت‌های لازم
 import { io } from "socket.io-client";
-import { useMatch } from '../../contexts/MatchContext';
 import Table from '../Table/Table';
-import { useNavigate } from 'react-router-dom';
+
 import '../index.css';
 import './styles.css';
 
@@ -16,39 +16,44 @@ interface TeamPoints {
   team_id: number;
   team_points: number;
   team_elms: number;
+  is_eliminated: number;
 }
 interface CombinedData extends Team {
     pts: number;
     elms: number;
+    is_eliminated: number;
 }
 
 function Control() {
-    const { selectedMatchId } = useMatch();
+    // [۲] خواندن ID مچ از آدرس URL
+    const { matchId } = useParams<{ matchId: string }>();
+
     const [combinedData, setCombinedData] = useState<CombinedData[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        if (!selectedMatchId) {
+        // [۳] تمام منطق حالا بر اساس matchId از URL کار می‌کند
+        if (!matchId) {
             setIsLoading(false);
             setCombinedData([]);
             return;
         }
 
         const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
-        setIsLoading(true);
 
         const fetchData = async () => {
+            setIsLoading(true);
             try {
                 const [teamsRes, pointsRes] = await Promise.all([
-                    fetch(`${apiUrl}/api/teams/${selectedMatchId!}`),
-                    fetch(`${apiUrl}/api/points/${selectedMatchId!}`)
+                    fetch(`${apiUrl}/api/teams/${matchId}`),
+                    fetch(`${apiUrl}/api/points/${matchId}`)
                 ]);
                 const teamsData = await teamsRes.json();
                 const pointsData = await pointsRes.json();
 
                 const combined = teamsData.map((team: Team) => {
-                    const teamPoints = pointsData.data.find((p: TeamPoints) => p.team_id === team.id) || { team_points: 0, team_elms: 0 };
-                    return { ...team, pts: teamPoints.team_points, elms: teamPoints.team_elms };
+                    const teamPoints = pointsData.data.find((p: TeamPoints) => p.team_id === team.id) || { team_points: 0, team_elms: 0, is_eliminated: 0 };
+                    return { ...team, pts: teamPoints.team_points, elms: teamPoints.team_elms, is_eliminated: teamPoints.is_eliminated };
                 });
                 setCombinedData(combined);
 
@@ -62,52 +67,59 @@ function Control() {
         fetchData();
 
         const socket = io(process.env.REACT_APP_SOCKET_URL || 'http://localhost:3001');
-        socket.emit('joinMatch', selectedMatchId);
+        socket.emit('joinMatch', matchId);
 
-        // [اصلاح نهایی]: در اینجا === با == جایگزین شد
-        socket.on('dataUpdated', (data: { match_id: any }) => {
-            if (data.match_id == selectedMatchId) fetchData();
-        });
-        socket.on('teamDataUpdated', (data: { match_id: any }) => {
-            if (data.match_id == selectedMatchId) fetchData();
-        });
+        const handleDataUpdate = (data: { match_id: any }) => {
+            if (data.match_id == matchId) fetchData();
+        };
+
+        socket.on('dataUpdated', handleDataUpdate);
+        socket.on('teamDataUpdated', handleDataUpdate);
 
         return () => {
-            socket.off('dataUpdated');
-            socket.off('teamDataUpdated');
+            socket.off('dataUpdated', handleDataUpdate);
+            socket.off('teamDataUpdated', handleDataUpdate);
             socket.disconnect();
         };
-    }, [selectedMatchId]);
+    }, [matchId]);
 
     const handlePointsChange = (teamId: number, amount: number) => {
-        if (!selectedMatchId) return;
+        if (!matchId) return;
         const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
-        axios.post(`${apiUrl}/api/update_points/${selectedMatchId}`, {
+        axios.post(`${apiUrl}/api/update_points/${matchId}`, {
             data: { team_id: teamId, team_points: amount }
         }).catch(error => console.error("Failed to update points:", error));
     };
 
     const handleElimsChange = (teamId: number, amount: number) => {
-        if (!selectedMatchId) return;
+        if (!matchId) return;
         const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
-        axios.post(`${apiUrl}/api/elms/${selectedMatchId}`, {
+        axios.post(`${apiUrl}/api/elms/${matchId}`, {
             data: { team_id: teamId, points: amount }
         }).catch(error => console.error("Failed to update elims:", error));
     };
 
-    // این تابع را داخل کامپوننت Control.tsx اضافه کنید
     const handleEliminateTeam = (teamId: number) => {
-        if (!selectedMatchId) return;
+        if (!matchId) return;
         if (window.confirm(`Are you sure you want to eliminate team ID ${teamId}?`)) {
-        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
-        axios.post(`${apiUrl}/api/teams/eliminate`, {
-            data: {
-                match_id: selectedMatchId,
-                team_id: teamId
-            }
-        }).catch(error => console.error("Failed to eliminate team:", error));
+            const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+            axios.post(`${apiUrl}/api/teams/eliminate`, {
+                data: { match_id: matchId, team_id: teamId }
+            }).catch(error => console.error("Failed to eliminate team:", error));
+        }
+    };
+
+    if (!matchId) {
+        return (
+             <div style={{ padding: '20px', textAlign: 'center', color: 'white' }}>
+                <h2>No Match Selected</h2>
+                <p>Please select a match first.</p>
+                <Link to="/matches">
+                    <button>Go to Match Selection</button>
+                </Link>
+            </div>
+        );
     }
-};
 
     return (
     <div>

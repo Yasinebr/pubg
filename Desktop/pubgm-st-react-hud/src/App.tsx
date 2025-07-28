@@ -1,40 +1,38 @@
-// src/App.tsx - نسخه جدید با جریان متفاوت
-
 import React from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { GameProvider } from './contexts/GameContext';
 import { MatchProvider } from './contexts/MatchContext';
+
+import GameSelector from './components/GameSelector';
 import { MatchSelector } from './components/MatchSelector';
+import Home from './HUD/Home';
+import Table from './HUD/Table/Table';
+import Control from './HUD/Control/Control';
+import { AdminPanel } from './HUD/AdminPanel/AdminPanel';
 import OverallTable from './HUD/OverallTable/OverallTable';
 
-// ایمپورت کامپوننت‌های شما
-import Home from './HUD/Home';
-import Control from './HUD/Control/Control';
-import Table from './HUD/Table/Table';
-import { AdminPanel } from './HUD/AdminPanel/AdminPanel';
-
 function App() {
-  return (
-    // MatchProvider همچنان کل برنامه را پوشش می‌دهد
-    <MatchProvider>
-      <Router>
-        <div>
-          <Routes>
-            {/* صفحه اصلی شما همیشه در آدرس ریشه در دسترس است */}
-            <Route path='/' element={<Home />} />
+    return (
+        <MatchProvider>
+            <GameProvider>
+                <Router>
+                    <Routes>
+                        {/* تمام مسیرها حالا عمومی هستند */}
+                        <Route path="/games" element={<GameSelector />} />
+                        <Route path="/" element={<Home />} />
+                        <Route path="/matches" element={<MatchSelector />} />
+                        <Route path="/table/:matchId" element={<Table />} />
+                        <Route path="/control/:matchId" element={<Control />} />
+                        <Route path="/admin/:matchId" element={<AdminPanel />} />
+                        <Route path="/overall" element={<OverallTable />} />
 
-            {/* یک صفحه جدید برای انتخاب و ساخت مچ‌ها */}
-            <Route path='/matches' element={<MatchSelector />} />
-            <Route path="/overall" element={<OverallTable />} />
-
-            {/* بقیه روت‌های شما */}
-            <Route path="/table/:matchId" element={<Table />} />
-            <Route path='/control' element={<Control />} />
-            <Route path="/admin" element={<AdminPanel />} />
-          </Routes>
-        </div>
-      </Router>
-    </MatchProvider>
-  );
+                        {/* اگر کاربر آدرس اشتباهی وارد کرد، او را به مسیر اصلی هدایت کن */}
+                        <Route path="*" element={<Navigate to="/" replace />} />
+                    </Routes>
+                </Router>
+            </GameProvider>
+        </MatchProvider>
+    );
 }
 
 export default App;

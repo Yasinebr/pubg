@@ -75,19 +75,46 @@ io.on('connection', (socket) => {
 
 // ----------------- API ROUTES -----------------
 
-// ## Match Management ##
-app.get('/api/matches', (req, res) => {
-    db.all('SELECT * FROM matches ORDER BY created_at DESC', [], (err, rows) => {
+// GET /api/games/:gameId/matches - گرفتن مچ‌های یک بازی
+app.get('/api/games/:gameId/matches', (req: Request, res: Response) => {
+    const { gameId } = req.params;
+    db.all('SELECT * FROM matches WHERE game_id = ? ORDER BY created_at DESC', [gameId], (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json(rows);
     });
 });
 
-app.post('/api/matches', (req, res) => {
+// POST /api/games/:gameId/matches - ساخت مچ جدید برای یک بازی
+app.post('/api/games/:gameId/matches', (req: Request, res: Response) => {
+    const { gameId } = req.params;
     const { name } = req.body;
-    if (!name) return res.status(400).json({ error: 'Match name is required' });
-    db.run('INSERT INTO matches (name) VALUES (?)', [name], function(err) {
+    if (!name) {
+        return res.status(400).json({ error: 'Match name is required' });
+    }
+    db.run('INSERT INTO matches (game_id, name) VALUES (?, ?)', [gameId, name], function(err) {
         if (err) return res.status(500).json({ error: err.message });
+        io.emit('matchesUpdated');
+        res.status(201).json({ id: this.lastID, name });
+    });
+});
+
+app.get('/api/games', (req: Request, res: Response) => {
+    db.all('SELECT * FROM games ORDER BY created_at DESC', [], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(rows);
+    });
+});
+
+// POST /api/games - ساخت یک بازی جدید
+app.post('/api/games', (req: Request, res: Response) => {
+    const { name } = req.body;
+    if (!name) {
+        return res.status(400).json({ error: 'Game name is required' });
+    }
+    db.run('INSERT INTO games (name) VALUES (?)', [name], function(err) {
+        if (err) return res.status(500).json({ error: err.message });
+        // به همه کلاینت‌ها خبر می‌دهیم که لیست بازی‌ها آپدیت شده
+        io.emit('gamesUpdated');
         res.status(201).json({ id: this.lastID, name });
     });
 });
@@ -110,26 +137,24 @@ app.get('/api/points/:match_id', (req, res) => {
 });
 
 
-app.get('/api/overall-standings', (req: Request, res: Response) => {
+app.get('/api/overall-standings/:gameId', (req: Request, res: Response) => {
+    const { gameId } = req.params;
+
     const query = `
         SELECT
-            t.name,
-            t.initial, -- [اصلاح]: این خط برای گرفتن نام مخفف اضافه شد
-            t.logo,
+            t.name, t.initial, t.logo,
             SUM(tp.team_points) as total_pts,
             SUM(tp.team_elms) as total_elms,
             (SUM(tp.team_points) + SUM(tp.team_elms)) as overall_total
-        FROM
-            teams t
-        JOIN
-            team_points tp ON t.id = tp.team_id
-        GROUP BY
-            t.name, t.initial, t.logo -- [اصلاح]: نام مخفف و لوگو به گروه بندی اضافه شدند
-        ORDER BY
-            overall_total DESC, total_pts DESC;
+        FROM teams t
+        JOIN team_points tp ON t.id = tp.team_id
+        -- [اصلاح کلیدی]: این خط نتایج را بر اساس بازی فعال فیلتر می‌کند
+        WHERE t.match_id IN (SELECT id FROM matches WHERE game_id = ?)
+        GROUP BY t.name, t.initial, t.logo
+        ORDER BY overall_total DESC, total_pts DESC;
     `;
 
-    db.all(query, [], (err: Error | null, rows: OverallStandingRow[]) => {
+    db.all(query, [gameId], (err: Error | null, rows: OverallStandingRow[]) => {
         if (err) {
             console.error("Error fetching overall standings:", err.message);
             return res.status(500).json({ error: 'Failed to fetch overall standings.' });
@@ -138,18 +163,52 @@ app.get('/api/overall-standings', (req: Request, res: Response) => {
     });
 });
 
-app.post('/api/matches/delete-all', (req, res) => {
-    // از آنجایی که در دیتابیس ON DELETE CASCADE را تنظیم کرده‌ایم،
-    // با حذف از جدول matches، تمام تیم‌ها و امتیازات مرتبط هم حذف می‌شوند.
-    db.run('DELETE FROM matches', function(err) {
+
+// API جدید برای حذف تمام مچ‌های یک بازی خاص
+app.delete('/api/games/:gameId/matches', (req: Request, res: Response) => {
+    const { gameId } = req.params;
+
+    // کوئری جدید که فقط مچ‌های با game_id مشخص را حذف می‌کند
+    db.run('DELETE FROM matches WHERE game_id = ?', [gameId], function(err: Error | null) {
         if (err) {
-            console.error("Error deleting all matches:", err.message);
-            return res.status(500).json({ error: 'Failed to delete all matches.' });
+            return res.status(500).json({ error: 'Failed to delete matches for this game.' });
         }
-        console.log(`All matches deleted, ${this.changes} rows affected.`);
-        // به تمام کلاینت‌های متصل خبر می‌دهیم که لیست مچ‌ها تغییر کرده
-        io.emit('matchesUpdated');
-        res.status(200).json({ message: 'All matches deleted successfully!' });
+        console.log(`All matches for game ${gameId} deleted, ${this.changes} rows affected.`);
+        io.emit('matchesUpdated'); // به فرانت‌اند خبر می‌دهیم که لیست مچ‌ها تغییر کرده
+        res.status(200).json({ message: 'Matches for the game deleted successfully!' });
+    });
+});
+
+// server.ts
+
+// API جدید برای گرفتن اطلاعات یک بازی خاص
+app.get('/api/games/:gameId', (req: Request, res: Response) => {
+    const { gameId } = req.params;
+    db.get('SELECT * FROM games WHERE id = ?', [gameId], (err, row) => {
+        if (err) {
+            return res.status(500).json({ error: err.message });
+        }
+        if (!row) {
+            return res.status(404).json({ error: 'Game not found.' });
+        }
+        res.json(row);
+    });
+});
+
+app.delete('/api/games/:gameId', (req: Request, res: Response) => {
+    const { gameId } = req.params;
+
+    db.run('DELETE FROM games WHERE id = ?', [gameId], function(err: Error | null) {
+        if (err) {
+            return res.status(500).json({ error: 'Failed to delete game.' });
+        }
+        // اگر هیچ ردیفی حذف نشده بود (یعنی بازی پیدا نشد)
+        if (this.changes === 0) {
+            return res.status(404).json({ error: 'Game not found.' });
+        }
+        // به همه خبر می‌دهیم که لیست بازی‌ها آپدیت شده
+        io.emit('gamesUpdated');
+        res.status(200).json({ message: `Game ${gameId} and all its data deleted successfully.` });
     });
 });
 

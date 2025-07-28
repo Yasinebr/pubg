@@ -1,6 +1,7 @@
-// مسیر فایل: src/components/MatchSelector.tsx
+// src/components/MatchSelector.tsx
 
 import React, { useState, useEffect } from 'react';
+import { useGame } from '../contexts/GameContext'; // [۱] از GameContext استفاده می‌کنیم
 import { useMatch } from '../contexts/MatchContext';
 import { useNavigate } from 'react-router-dom';
 import './MatchSelector.css';
@@ -11,100 +12,92 @@ interface Match {
 }
 
 export const MatchSelector = () => {
+    const { selectedGameId } = useGame(); // [۲] آیدی بازی فعال را می‌گیریم
+    const { setSelectedMatchId } = useMatch();
+
     const [matches, setMatches] = useState<Match[]>([]);
     const [newMatchName, setNewMatchName] = useState('');
-    const { setSelectedMatchId } = useMatch();
     const navigate = useNavigate();
     const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
-    // تابع برای گرفتن لیست مچ‌ها از سرور
-    const fetchMatches = () => {
-        fetch(`${apiUrl}/api/matches`)
-            .then(res => res.json())
-            .then(data => setMatches(data))
-            .catch(err => console.error("Failed to fetch matches:", err));
+    // [۳] این useEffect حالا به selectedGameId وابسته است
+    useEffect(() => {
+        // فقط زمانی که یک بازی انتخاب شده، مچ‌ها را fetch کن
+        if (selectedGameId) {
+            fetch(`${apiUrl}/api/games/${selectedGameId}/matches`)
+                .then(res => res.json())
+                .then(data => setMatches(data))
+                .catch(err => console.error("Failed to fetch matches:", err));
+        }
+    }, [selectedGameId, apiUrl]);
+
+    const handleMatchSelect = (id: number) => {
+        setSelectedMatchId(id);
+        navigate('/'); // کاربر را به صفحه اصلی (home) هدایت کن
     };
 
-    // در اولین بارگذاری، لیست مچ‌ها را می‌گیریم
-    useEffect(() => {
-        fetchMatches();
-    }, []);
-
-    // تابع برای انتخاب یک مچ و رفتن به صفحه اصلی
-    const handleMatchSelect = (id: number) => {
-    // [خط جدید]: این پیغام را برای تست اضافه می‌کنیم
-    console.log(`Match ID Selected: ${id}`);
-
-    setSelectedMatchId(id);
-    navigate('/');
-};
-
-
-    // تابع برای ارسال درخواست ساخت مچ به بک‌اند
     const handleCreateMatch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newMatchName.trim()) {
-        alert("Please enter the name of the match.");
-        return;
-    }
-    try {
-        const response = await fetch(`${apiUrl}/api/matches`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name: newMatchName }),
-        });
+        e.preventDefault();
+        if (!newMatchName.trim() || !selectedGameId) return;
 
-        // [۱] گرفتن اطلاعات مچ جدید از پاسخ سرور
-        const newMatch = await response.json();
+        try {
+            const response = await fetch(`${apiUrl}/api/games/${selectedGameId}/matches`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: newMatchName }),
+            });
+            if (!response.ok) throw new Error('Failed to create match');
 
-        if (!response.ok) {
-            throw new Error(newMatch.error || 'Failed to create match');
+            // لیست مچ‌ها را دوباره می‌گیریم تا مچ جدید نمایش داده شود
+            fetch(`${apiUrl}/api/games/${selectedGameId}/matches`)
+                .then(res => res.json())
+                .then(data => setMatches(data));
+
+            setNewMatchName('');
+        } catch (error) {
+            console.error(error);
+            alert('Error creating new match');
         }
+    };
 
-        // [۲] انتخاب خودکار مچ جدید و هدایت کاربر
-        setSelectedMatchId(newMatch.id);
-        navigate('/'); // کاربر را مستقیماً به صفحه اصلی می‌بریم
-
-    } catch (error) {
-        console.error(error);
-        alert('خطا در ساخت مچ جدید');
+    // اگر به هر دلیلی gameId وجود نداشت، چیزی نمایش نده
+    if (!selectedGameId) {
+        return <div>Please select a game first.</div>;
     }
-};
 
     return (
-        <div style={{ padding: '20px', fontFamily: 'sans-serif' }}>
-            {/* بخش مهم ۱: فرم ساخت مچ جدید */}
-            <div className="create-match-form">
-                <h2>Making a new wrist</h2>
-                <form onSubmit={handleCreateMatch}>
+        <div className="match-selector-container">
+            <div className="card">
+                <h2>Create New Match for Game #{selectedGameId}</h2>
+                <form onSubmit={handleCreateMatch} className="create-form">
                     <input
                         type="text"
                         value={newMatchName}
                         onChange={(e) => setNewMatchName(e.target.value)}
-                        placeholder="Enter the name of the new match."
-                        style={{ padding: '8px', marginRight: '10px', fontSize: '1rem' }}
+                        placeholder="Enter new match name"
                     />
-                    <button type="submit" style={{ padding: '8px 12px', fontSize: '1rem' }}>
-                        Build
+                    <button type="submit" className="create-button">
+                        Create Match
                     </button>
                 </form>
             </div>
 
-            <hr style={{ margin: '40px 0' }} />
-
-            {/* بخش مهم ۲: لیست مچ‌های موجود */}
-            <h2>Select the available wristband</h2>
-            {matches.length > 0 ? (
-                <div>
-                    {matches.map(match => (
-                        <button key={match.id} onClick={() => handleMatchSelect(match.id)} style={{ display: 'block', margin: '10px 0', padding: '10px', fontSize: '1rem', cursor: 'pointer' }}>
-                            {match.name} (ID: {match.id})
-                        </button>
-                    ))}
-                </div>
-            ) : (
-                <p>There are no matches to display. Please create a new one.</p>
-            )}
+            <div className="card">
+                <h2>Select Existing Match</h2>
+                {matches.length > 0 ? (
+                    <div className="list">
+                        {matches.map(match => (
+                            <button key={match.id} onClick={() => handleMatchSelect(match.id)} className="select-button">
+                                {match.name} (ID: {match.id})
+                            </button>
+                        ))}
+                    </div>
+                ) : (
+                    <p>No existing matches for this game. Please create a new one.</p>
+                )}
+            </div>
         </div>
     );
 };
+
+export default MatchSelector;

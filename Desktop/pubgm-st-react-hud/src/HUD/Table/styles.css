@@ -405,3 +405,13 @@
     text-decoration: line-through; /* خط روی متن */
     opacity: 0.6;
 }
+
+/* [جدید]: استایل برای عنوان نام بازی که بالای جدول نمایش داده می‌شود */
+.main-title {
+    text-align: center;
+    color: #ecf0f1; /* رنگ سفید-خاکستری */
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    font-size: 2.5rem;
+    letter-spacing: 2px;
+}
