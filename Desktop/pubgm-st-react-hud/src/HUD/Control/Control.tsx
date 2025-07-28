@@ -42,7 +42,7 @@ function Control() {
         const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
         const fetchData = async () => {
-            setIsLoading(true);
+            //setIsLoading(true);
             try {
                 const [teamsRes, pointsRes] = await Promise.all([
                     fetch(`${apiUrl}/api/teams/${matchId}`),
