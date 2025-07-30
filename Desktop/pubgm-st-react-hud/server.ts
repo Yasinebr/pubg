@@ -401,7 +401,7 @@ app.get('/api/points/:match_id', (req, res) => {
     });
 });
 
-app.get('/api/overall-standings/:gameId', (req: Request, res: Response) => {
+app.get('/games/:gameId/overall', (req: Request, res: Response) => {
     const { gameId } = req.params;
     const query = `
         SELECT t.name, t.initial, t.logo,
@@ -416,6 +416,19 @@ app.get('/api/overall-standings/:gameId', (req: Request, res: Response) => {
     db.all(query, [gameId], (err: Error | null, rows: OverallStandingRow[]) => {
         if (err) return res.status(500).json({ error: 'Failed to fetch overall standings.' });
         res.json(rows);
+    });
+});
+
+app.get('/api/games/:gameId', (req: Request, res: Response) => {
+    const { gameId } = req.params;
+    db.get('SELECT * FROM games WHERE id = ?', [gameId], (err, row) => {
+        if (err) {
+            return res.status(500).json({ error: 'Failed to fetch game details.' });
+        }
+        if (!row) {
+            return res.status(404).json({ error: 'Game not found.' });
+        }
+        res.json(row);
     });
 });
 

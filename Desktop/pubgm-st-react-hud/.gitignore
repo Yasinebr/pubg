@@ -7,7 +7,7 @@
 
 # testing
 /coverage
-database/database.db
+
 
 # misc
 .DS_Store
