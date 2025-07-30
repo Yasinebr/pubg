@@ -1,38 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useParams, Link } from 'react-router-dom'; // [۱] ایمپورت‌های لازم
-import { io } from "socket.io-client";
+import { useParams, Link } from 'react-router-dom';
+import { io, Socket } from "socket.io-client";
 import Table from '../Table/Table';
 
 import '../index.css';
 import './styles.css';
 
-// اینترفیس‌ها
-interface Team {
+// [تغییر ۱]: اینترفیس جدید که دقیقاً با داده‌های ارسالی از بک‌اند مطابقت دارد
+interface CombinedData {
   id: number;
   name: string;
-}
-interface TeamPoints {
-  team_id: number;
+  initial: string;
+  logo: string;
   team_points: number;
   team_elms: number;
   is_eliminated: number;
 }
-interface CombinedData extends Team {
-    pts: number;
-    elms: number;
-    is_eliminated: number;
-}
 
 function Control() {
-    // [۲] خواندن ID مچ از آدرس URL
     const { matchId } = useParams<{ matchId: string }>();
 
     const [combinedData, setCombinedData] = useState<CombinedData[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        // [۳] تمام منطق حالا بر اساس matchId از URL کار می‌کند
         if (!matchId) {
             setIsLoading(false);
             setCombinedData([]);
@@ -40,49 +32,32 @@ function Control() {
         }
 
         const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+        const socket: Socket = io(apiUrl);
 
-        const fetchData = async () => {
-            //setIsLoading(true);
-            try {
-                const [teamsRes, pointsRes] = await Promise.all([
-                    fetch(`${apiUrl}/api/teams/${matchId}`),
-                    fetch(`${apiUrl}/api/points/${matchId}`)
-                ]);
-                const teamsData = await teamsRes.json();
-                const pointsData = await pointsRes.json();
+        // [تغییر ۲]: به محض اتصال، به روم مربوط به این مچ جوین می‌شویم
+        socket.on('connect', () => {
+            console.log('Socket connected, joining match:', matchId);
+            socket.emit('joinMatch', matchId);
+        });
 
-                const combined = teamsData.map((team: Team) => {
-                    const teamPoints = pointsData.data.find((p: TeamPoints) => p.team_id === team.id) || { team_points: 0, team_elms: 0, is_eliminated: 0 };
-                    return { ...team, pts: teamPoints.team_points, elms: teamPoints.team_elms, is_eliminated: teamPoints.is_eliminated };
-                });
-                setCombinedData(combined);
+        // [تغییر ۳]: به رویداد جدید گوش می‌دهیم
+        // این رویداد داده‌های کامل و به‌روز شده را به همراه خود دارد
+        socket.on('matchDataUpdated', (updatedData: CombinedData[]) => {
+            console.log('Received matchDataUpdated event with', updatedData.length, 'teams.');
+            setCombinedData(updatedData);
+            setIsLoading(false); // بعد از دریافت اولین داده، لودینگ تمام می‌شود
+        });
 
-            } catch (error) {
-                console.error("Failed to fetch match data:", error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
+        // [حذف شده]: دیگر نیازی به تابع fetchData و ارسال درخواست‌های fetch مجزا نیست
 
-        fetchData();
-
-        const socket = io(process.env.REACT_APP_SOCKET_URL || 'http://localhost:3001');
-        socket.emit('joinMatch', matchId);
-
-        const handleDataUpdate = (data: { match_id: any }) => {
-            if (data.match_id == matchId) fetchData();
-        };
-
-        socket.on('dataUpdated', handleDataUpdate);
-        socket.on('teamDataUpdated', handleDataUpdate);
-
+        // در زمان خروج از کامپوننت، اتصال سوکت را قطع می‌کنیم
         return () => {
-            socket.off('dataUpdated', handleDataUpdate);
-            socket.off('teamDataUpdated', handleDataUpdate);
+            console.log('Disconnecting socket...');
             socket.disconnect();
         };
     }, [matchId]);
 
+    // توابع ارسال‌کننده تغییرات بدون تغییر باقی می‌مانند
     const handlePointsChange = (teamId: number, amount: number) => {
         if (!matchId) return;
         const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
@@ -101,12 +76,12 @@ function Control() {
 
     const handleEliminateTeam = (teamId: number) => {
         if (!matchId) return;
-        if (window.confirm(`Are you sure you want to eliminate team ID ${teamId}?`)) {
-            const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
-            axios.post(`${apiUrl}/api/teams/eliminate`, {
-                data: { match_id: matchId, team_id: teamId }
-            }).catch(error => console.error("Failed to eliminate team:", error));
-        }
+        // از window.confirm استفاده نکنید چون در برخی محیط‌ها کار نمی‌کند.
+        // در آینده می‌توانید از یک Modal سفارشی استفاده کنید.
+        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+        axios.post(`${apiUrl}/api/teams/eliminate`, {
+            data: { match_id: matchId, team_id: teamId }
+        }).catch(error => console.error("Failed to eliminate team:", error));
     };
 
     if (!matchId) {
@@ -124,11 +99,7 @@ function Control() {
     return (
     <div>
         <div className='nav-bar'>
-            <div className='container'>
-                <button onClick={() => {}} style={{padding: '5px 10px', marginLeft: '10px'}}>
-                    Refresh Data (No Cache)
-                </button>
-            </div>
+            {/* دکمه رفرش دستی دیگر ضروری نیست اما می‌تواند برای تست باقی بماند */}
         </div>
         <div className='container margin-top-15 control-container-m'>
             <div className='control-container'>
@@ -142,7 +113,7 @@ function Control() {
                 </div>
 
                 {isLoading ? (
-                    <div style={{textAlign: 'center', padding: '20px'}}>Loading...</div>
+                    <div style={{textAlign: 'center', padding: '20px', color: 'white'}}>Loading initial data...</div>
                 ) : (
                     combinedData.map((team, index) => (
                         <div className='control-div-m' key={team.id}>
@@ -152,14 +123,14 @@ function Control() {
                                     <p className='team-name' id={`team-name-${team.id}`}>{team.name}</p>
                                 </div>
 
-                                {/* ستون PLCE */}
+                                {/* ستون PLC */}
                                 <div className='control-div control-team-points'>
                                     <div className='flex-div'>
                                         <div className='control-m-p-div'>
                                             <button className='control-button player-knocked-button' onClick={() => handlePointsChange(team.id, -1)}>-</button>
                                         </div>
                                         <div className='control-points-div'>
-                                            <span className='auto-points'>{team.pts}</span>
+                                            <span className='auto-points'>{team.team_points}</span>
                                         </div>
                                         <div className='control-m-p-div'>
                                             <button className='control-button player-knocked-button' onClick={() => handlePointsChange(team.id, 1)}>+</button>
@@ -174,7 +145,7 @@ function Control() {
                                             <button className='control-button player-knocked-button' onClick={() => handleElimsChange(team.id, -1)}>-</button>
                                         </div>
                                         <div className='control-points-div'>
-                                            <span className='auto-points'>{team.elms}</span>
+                                            <span className='auto-points'>{team.team_elms}</span>
                                         </div>
                                         <div className='control-m-p-div'>
                                             <button className='control-button player-knocked-button' onClick={() => handleElimsChange(team.id, 1)}>+</button>
@@ -182,9 +153,8 @@ function Control() {
                                     </div>
                                 </div>
 
-                                {/* [اصلاح شده]: ستون ELIMINATE به جایگاه صحیح خود (کنار ستون ELM) منتقل شد */}
                                 <div className='control-div control-team-points'>
-                                    <button className='control-button eliminate-button' onClick={() => handleEliminateTeam(team.id)}>
+                                    <button className='control-button eliminate-button' onClick={() => handleEliminateTeam(team.id)} disabled={team.is_eliminated === 1}>
                                         E
                                     </button>
                                 </div>

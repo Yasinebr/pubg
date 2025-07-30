@@ -9,7 +9,6 @@ function Home() {
     const navigate = useNavigate();
 
     const handleManageGames = () => {
-        // این تابع حالا فقط کاربر را به صفحه مدیریت بازی‌ها می‌برد
         navigate('/games');
     };
 
@@ -46,7 +45,9 @@ function Home() {
                 )}
 
                 <Link to="/matches" className='home-button'>Matches</Link>
-                <Link to="/overall" className='home-button'>Overall</Link>
+
+                {/* [تغییر کلیدی]: لینک Overall اکنون به آدرس صحیح و داینامیک اشاره می‌کند */}
+                <Link to={`/games/${selectedGameId}/overall`} className='home-button'>Overall</Link>
 
                 <button onClick={handleManageGames} className='home-button switch-game-button'>
                     Switch Game

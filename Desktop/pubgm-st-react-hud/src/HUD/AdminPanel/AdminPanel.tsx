@@ -1,17 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { io } from "socket.io-client";
+import { io, Socket } from "socket.io-client";
 import { useGame } from '../../contexts/GameContext';
 import { useMatch } from '../../contexts/MatchContext';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 
 import './AdminPanel.css';
 
-interface Team {
+// [تغییر ۱]: اینترفیس جدید که با داده‌های ارسالی از بک‌اند مطابقت دارد
+interface TeamData {
   id: number;
   name: string;
   initial: string;
   logo: string;
+  // سایر فیلدها مانند امتیازات نیز در این داده وجود دارند اما در این پنل استفاده نمی‌شوند
 }
 
 export const AdminPanel: React.FC = () => {
@@ -20,47 +22,43 @@ export const AdminPanel: React.FC = () => {
     const { setSelectedMatchId } = useMatch();
     const navigate = useNavigate();
 
-    const [teams, setTeams] = useState<Team[]>([]);
+    const [teams, setTeams] = useState<TeamData[]>([]);
     const [teamNameInputs, setTeamNameInputs] = useState<{ [key: number]: string }>({});
     const [teamLogoFiles, setTeamLogoFiles] = useState<{ [key: number]: File | null }>({});
     const [newTeamName, setNewTeamName] = useState('');
     const [newTeamInitial, setNewTeamInitial] = useState('');
     const [newTeamLogo, setNewTeamLogo] = useState<File | null>(null);
+    const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
+    // [تغییر ۲]: بازنویسی کامل useEffect برای استفاده از سیستم جدید سوکت
     useEffect(() => {
         if (!matchId) {
             setTeams([]);
             return;
         }
 
-        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+        const socket: Socket = io(apiUrl);
 
-        const fetchTeams = () => {
-            axios.get(`${apiUrl}/api/teams/${matchId}`)
-              .then(response => setTeams(response.data))
-              .catch(console.error);
-        };
-        fetchTeams();
+        // به محض اتصال، به روم مربوط به این مچ جوین می‌شویم
+        socket.on('connect', () => {
+            console.log(`AdminPanel Socket connected, joining match: ${matchId}`);
+            socket.emit('joinMatch', matchId);
+        });
 
-        const socket = io(process.env.REACT_APP_SOCKET_URL || 'http://localhost:3001');
-        socket.emit('joinMatch', matchId);
+        // به رویداد جدید و بهینه شده گوش می‌دهیم
+        socket.on('matchDataUpdated', (updatedData: TeamData[]) => {
+            console.log('AdminPanel received matchDataUpdated event.');
+            setTeams(updatedData);
+        });
 
-        const handleDataUpdate = (data: { match_id: any }) => {
-            if (data.match_id == matchId) {
-                fetchTeams();
-            }
-        };
-
-        socket.on('dataUpdated', handleDataUpdate);
-        socket.on('teamDataUpdated', handleDataUpdate);
-
+        // در زمان خروج از کامپوننت، اتصال سوکت را قطع می‌کنیم
         return () => {
-            socket.off('dataUpdated', handleDataUpdate);
-            socket.off('teamDataUpdated', handleDataUpdate);
+            console.log('Disconnecting AdminPanel socket...');
             socket.disconnect();
         };
-    }, [matchId]);
+    }, [matchId, apiUrl]);
 
+    // [بدون تغییر]: تمام توابع مربوط به عملیات ادمین حفظ شده‌اند
     const handleAddTeam = async () => {
         if (!matchId) return alert('No match selected.');
         if (!newTeamName || !newTeamInitial || !newTeamLogo) return alert('Please fill all fields.');
@@ -71,7 +69,6 @@ export const AdminPanel: React.FC = () => {
         formData.append('logo_file', newTeamLogo);
 
         try {
-            const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
             await axios.post(`${apiUrl}/api/admin/add-team/${matchId}`, formData);
             alert('Team added successfully!');
             setNewTeamName('');
@@ -79,6 +76,7 @@ export const AdminPanel: React.FC = () => {
             setNewTeamLogo(null);
             const fileInput = document.getElementById('new-team-logo-input') as HTMLInputElement;
             if (fileInput) fileInput.value = '';
+            // لیست تیم‌ها به صورت خودکار توسط سوکت آپدیت می‌شود
         } catch (error) {
             console.error(error);
             alert('Failed to add team.');
@@ -89,11 +87,11 @@ export const AdminPanel: React.FC = () => {
         if (!matchId) return alert('No match selected.');
         if (window.confirm(`Are you sure you want to delete team with ID ${teamId}?`)) {
             try {
-                const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
                 await axios.post(`${apiUrl}/api/admin/delete-team/${matchId}`, {
                     data: { team_id: teamId }
                 });
                 alert('Team deleted successfully!');
+                // لیست تیم‌ها به صورت خودکار توسط سوکت آپدیت می‌شود
             } catch (error) {
                 console.error(error);
                 alert('Failed to delete team.');
@@ -107,11 +105,11 @@ export const AdminPanel: React.FC = () => {
         if (!newName) return alert('Please enter a new name.');
 
         try {
-            const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
             await axios.post(`${apiUrl}/api/admin/update-name/${matchId}`, {
                 data: { team_id: teamId, new_name: newName }
             });
             alert('Team name updated successfully!');
+            // لیست تیم‌ها به صورت خودکار توسط سوکت آپدیت می‌شود
         } catch (error) {
             console.error(error);
             alert('Failed to update name.');
@@ -128,9 +126,9 @@ export const AdminPanel: React.FC = () => {
         formData.append('logo_file', logoFile);
 
         try {
-            const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
             await axios.post(`${apiUrl}/api/admin/update-logo/${matchId}`, formData);
             alert('Logo updated successfully!');
+            // لیست تیم‌ها به صورت خودکار توسط سوکت آپدیت می‌شود
         } catch (error) {
             console.error(error);
             alert('Failed to update logo.');
@@ -142,7 +140,6 @@ export const AdminPanel: React.FC = () => {
         const confirmText = "Are you sure you want to delete ALL matches for the CURRENT game? This is irreversible!";
         if (window.confirm(confirmText)) {
             try {
-                const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
                 await axios.delete(`${apiUrl}/api/games/${selectedGameId}/matches`);
                 alert('All matches for this game were successfully deleted!');
                 setSelectedMatchId(null);
@@ -156,7 +153,7 @@ export const AdminPanel: React.FC = () => {
 
     if (!matchId) {
         return (
-            <div style={{ padding: '20px', textAlign: 'center' }}>
+            <div style={{ padding: '20px', textAlign: 'center', color: 'white' }}>
                 <h2>No Match ID Provided in URL</h2>
                 <Link to="/matches"><button>Go to Match Selection</button></Link>
             </div>
@@ -174,7 +171,6 @@ export const AdminPanel: React.FC = () => {
                         <input type="text" placeholder="Initial (e.g., TSM)" value={newTeamInitial} onChange={(e) => setNewTeamInitial(e.target.value)} style={{maxWidth: '150px'}} />
                     </div>
                     <div className="form-group">
-                        {/* [اصلاح شده]: e.g به e.target تغییر کرد */}
                         <input type="file" id="new-team-logo-input" onChange={(e) => setNewTeamLogo(e.target.files ? e.target.files[0] : null)} />
                         <button onClick={handleAddTeam} style={{backgroundColor: '#2ecc71'}}>Create Team</button>
                     </div>

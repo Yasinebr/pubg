@@ -10,6 +10,7 @@ import Table from './HUD/Table/Table';
 import Control from './HUD/Control/Control';
 import { AdminPanel } from './HUD/AdminPanel/AdminPanel';
 import OverallTable from './HUD/OverallTable/OverallTable';
+import MatchStandings from './HUD/MatchStandings/MatchStandings';
 
 function App() {
     return (
@@ -17,14 +18,16 @@ function App() {
             <GameProvider>
                 <Router>
                     <Routes>
-                        {/* تمام مسیرها حالا عمومی هستند */}
+
                         <Route path="/games" element={<GameSelector />} />
                         <Route path="/" element={<Home />} />
                         <Route path="/matches" element={<MatchSelector />} />
                         <Route path="/table/:matchId" element={<Table />} />
                         <Route path="/control/:matchId" element={<Control />} />
                         <Route path="/admin/:matchId" element={<AdminPanel />} />
-                        <Route path="/overall" element={<OverallTable />} />
+                        <Route path="/games/:gameId/overall" element={<OverallTable />} />
+                        <Route path="/overall" element={<Navigate to="/games" replace />} />
+                        <Route path="/matches/:matchId/standings" element={<MatchStandings />} />
 
                         {/* اگر کاربر آدرس اشتباهی وارد کرد، او را به مسیر اصلی هدایت کن */}
                         <Route path="*" element={<Navigate to="/" replace />} />

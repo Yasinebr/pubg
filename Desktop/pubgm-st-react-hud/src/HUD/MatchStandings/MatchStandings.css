@@ -1,0 +1,152 @@
+/* Styles for the Match Standings page */
+
+.match-standings-page {
+    padding: 20px;
+    background-color: transparent !important;
+    background: none !important;
+    min-height: 100vh;
+    color: #ecf0f1;
+    font-family: sans-serif;
+}
+
+.match-standings-page .page-title {
+    text-align: center;
+    color: #000000;
+    font-size: 2.5rem;
+    margin-bottom: 30px;
+    text-transform: uppercase;
+    font-weight: bold;
+}
+
+.match-standings-page .two-column-layout {
+    display: flex;
+    justify-content: center;
+    gap: 25px;
+    flex-wrap: wrap;
+    background: transparent !important;
+}
+
+.match-standings-page .table-column {
+    /* کاملاً شفاف کردن جدول‌ها */
+    background-color: transparent !important;
+    background: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+
+    padding: 0;
+    flex: 1;
+    min-width: 450px;
+    max-width: 650px;
+}
+
+.match-standings-page .table-header-m {
+    display: flex;
+    font-weight: bold;
+    color: #000000;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #000000;
+    margin-bottom: 10px;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    background: transparent !important;
+}
+
+.match-standings-page .team-m-parent {
+    display: flex;
+    flex-direction: column;
+    background: transparent !important;
+}
+
+.match-standings-page .team-m {
+    display: flex;
+    align-items: center;
+    padding: 12px 5px;
+    border-bottom: 1px solid #34495e;
+    transition: background-color 0.3s ease;
+    background: transparent !important;
+    background-color: transparent !important;
+}
+
+.match-standings-page .team-m:hover {
+    background: transparent !important;
+    background-color: transparent !important;
+}
+
+.match-standings-page .team-m:last-child {
+    border-bottom: none;
+}
+
+.match-standings-page .team-m.eliminated {
+    opacity: 0.6;
+    filter: grayscale(50%);
+    background: transparent !important;
+}
+
+.match-standings-page .column-rank {
+    width: 10%;
+    text-align: center;
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: #000000;
+}
+
+.match-standings-page .column-team {
+    width: 50%;
+    padding-left: 10px;
+}
+
+.match-standings-page .column-stats {
+    width: 13.33%;
+    text-align: center;
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: #000000;
+}
+
+.match-standings-page .team-team-side {
+    display: flex;
+    align-items: center;
+}
+
+.match-standings-page .team-logo-m {
+    width: 40px;
+    height: 40px;
+    margin-right: 15px;
+    flex-shrink: 0;
+}
+
+.match-standings-page .team-logo {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.match-standings-page .team-name-m {
+    display: flex;
+    flex-direction: column;
+}
+
+.match-standings-page .team-name-tb {
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: #000000;
+}
+
+.loading-message {
+    text-align: center;
+    font-size: 1.5rem;
+    padding: 60px;
+    color: #000000;
+    background: transparent !important;
+}
+
+/* اضافه کردن قوانین سراسری برای اطمینان */
+* {
+    box-sizing: border-box;
+}
+
+.match-standings-page * {
+    background-color: transparent !important;
+    background-image: none !important;
+}

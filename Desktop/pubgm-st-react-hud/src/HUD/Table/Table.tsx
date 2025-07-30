@@ -1,104 +1,64 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { useGame } from '../../contexts/GameContext';
 import { useMatch } from '../../contexts/MatchContext';
-import io from 'socket.io-client';
+import { io, Socket } from 'socket.io-client';
 
 import '../index.css';
 import './styles.css';
 
-// اینترفیس‌ها
-interface Team {
+// [تغییر ۱]: اینترفیس جدید که دقیقاً با داده‌های ارسالی از بک‌اند مطابقت دارد
+interface Standing {
   id: number;
   name: string;
   initial: string;
   logo: string;
-}
-
-interface TeamPoints {
-  team_id: number;
   team_points: number;
   team_elms: number;
   is_eliminated: number;
 }
 
-// کامپوننت اصلی
 function Table() {
-    // گرفتن ID از هر دو منبع: URL و Context
     const { matchId: paramMatchId } = useParams<{ matchId: string }>();
     const { selectedMatchId: contextMatchId } = useMatch();
-    const { selectedGameId } = useGame();
-
-    // اولویت با ID موجود در URL است، در غیر این صورت از Context استفاده کن
     const activeMatchId = paramMatchId || contextMatchId;
 
-    const [teams, setTeams] = useState<Team[]>([]);
-    const [points, setPoints] = useState<TeamPoints[]>([]);
+    // [تغییر ۲]: استفاده از یک state واحد برای نگهداری داده‌های مرتب‌شده
+    const [standings, setStandings] = useState<Standing[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [gameName, setGameName] = useState('');
 
     useEffect(() => {
-        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
-
-        // تابع برای گرفتن نام بازی
-        //const fetchGameName = async () => {
-          //  if (selectedGameId) {
-            //    try {
-              //      const response = await fetch(`${apiUrl}/api/games/${selectedGameId}`);
-                ///    if (!response.ok) return;
-                   // const data = await response.json();
-                   // setGameName(data.name);
-              //  } catch (error) {
-                ///    console.error("Failed to fetch game name:", error);
-                //}
-        ///    }
-       // };
-
-        // تابع برای گرفتن داده‌های مچ
-        const fetchMatchData = async () => {
-            if (!activeMatchId) {
-                setIsLoading(false);
-                setTeams([]);
-                setPoints([]);
-                return;
-            }
-            // setIsLoading(true); // این خط برای جلوگیری از چشمک زدن کامنت شد
-            try {
-                const [teamsRes, pointsRes] = await Promise.all([
-                    fetch(`${apiUrl}/api/teams/${activeMatchId}`),
-                    fetch(`${apiUrl}/api/points/${activeMatchId}`)
-                ]);
-                const teamsData = await teamsRes.json();
-                const pointsData = await pointsRes.json();
-                setTeams(teamsData);
-                setPoints(pointsData.data);
-            } catch (error) {
-                console.error("Failed to fetch match data:", error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        //fetchGameName();
-        fetchMatchData();
-
-        const socket = io(process.env.REACT_APP_SOCKET_URL || 'http://localhost:3001');
-        if (activeMatchId) {
-            socket.emit('joinMatch', activeMatchId);
-            const handleDataUpdate = (data: { match_id: any }) => {
-                if (data.match_id == activeMatchId) fetchMatchData();
-            };
-            socket.on('dataUpdated', handleDataUpdate);
-            socket.on('teamDataUpdated', handleDataUpdate);
+        if (!activeMatchId) {
+            setIsLoading(false);
+            setStandings([]);
+            return;
         }
 
+        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+        const socket: Socket = io(apiUrl);
+
+        // [تغییر ۳]: به محض اتصال، به روم مربوط به این مچ جوین می‌شویم
+        socket.on('connect', () => {
+            console.log(`Table Socket connected, joining match: ${activeMatchId}`);
+            socket.emit('joinMatch', activeMatchId);
+        });
+
+        // [تغییر ۴]: به رویداد جدید و بهینه شده گوش می‌دهیم
+        socket.on('matchDataUpdated', (updatedData: Standing[]) => {
+            console.log('Table received matchDataUpdated event.');
+            setStandings(updatedData);
+            setIsLoading(false);
+        });
+
+        // [حذف شده]: دیگر نیازی به تابع fetchData و ارسال درخواست‌های fetch مجزا نیست
+
         return () => {
+            console.log('Disconnecting Table socket...');
             socket.disconnect();
         };
-    }, [activeMatchId, selectedGameId]);
+    }, [activeMatchId]);
 
     if (isLoading) {
-        return <div style={{ color: 'white', textAlign: 'center', paddingTop: '20px' }}>Loading Data...</div>;
+        return <div style={{ color: 'white', textAlign: 'center', paddingTop: '50px', fontSize: '1.5rem' }}>Loading Leaderboard...</div>;
     }
 
     if (!activeMatchId) {
@@ -107,33 +67,18 @@ function Table() {
                 <h2>No Match Selected</h2>
                 <p>Please select a match first to view the leaderboard.</p>
                 <Link to="/matches">
-                    <button>Go to Match Selection</button>
+                    <button className="link-button">Go to Match Selection</button>
                 </Link>
             </div>
         );
     }
 
-    const getCombinedAndSortedData = () => {
-        if (!teams.length) return [];
-        const combined = teams.map(team => {
-            const teamPoints = points.find(p => p.team_id === team.id) || { team_points: 0, team_elms: 0, is_eliminated: 0 };
-            return {
-                ...team,
-                pts: teamPoints.team_points,
-                elms: teamPoints.team_elms,
-                total: teamPoints.team_points + teamPoints.team_elms,
-                is_eliminated: teamPoints.is_eliminated
-            };
-        });
-        return combined.sort((a, b) => (b.total - a.total) || (b.pts - a.pts));
-    };
-
-    const sortedTeamsData = getCombinedAndSortedData();
+    // [حذف شده]: تابع getCombinedAndSortedData دیگر مورد نیاز نیست چون سرور داده‌ها را مرتب‌شده ارسال می‌کند
 
     return (
         <div className="table-container">
             <div className='table-m'>
-                <div className='table-header-m' style={{ display: 'flex', alignItems: 'center'}}>
+                <div className='table-header-m'>
                     <div className='blank-div column-rank'>#</div>
                     <div className='table-inner-element table-team-header column-team'>TEAM NAME</div>
                     <div className='table-inner-element table-stats-side column-pts'>PLC</div>
@@ -141,8 +86,9 @@ function Table() {
                     <div className='table-inner-element table-stats-side column-total'>TOTAL</div>
                 </div>
                 <div className='team-m-parent'>
-                {sortedTeamsData.map((team, index) => (
-                    <div className={`team-m ${team.is_eliminated === 1 ? 'eliminated' : ''}`} key={team.id} style={{ display: 'flex', alignItems: 'center'}}>
+                {/* [تغییر ۵]: مستقیماً از state جدید برای رندر کردن استفاده می‌کنیم */}
+                {standings.map((team, index) => (
+                    <div className={`team-m ${team.is_eliminated === 1 ? 'eliminated' : ''}`} key={team.id}>
                         <div className='table-inner-element team-rank-side column-rank'>{index + 1}</div>
                         <div className='table-inner-element team-team-side column-team'>
                             <div className='table-inner-element team-logo-m'>
@@ -156,19 +102,13 @@ function Table() {
                             </div>
                         </div>
                         <div className='table-inner-element table-stats-side column-pts' data-label="PTS">
-                            <div className='table-inner-element'>
-                                <span className='team-pts' id={`team-pts-${team.id}`}>{team.pts}</span>
-                            </div>
+                            <span className='team-pts'>{team.team_points}</span>
                         </div>
                         <div className='table-inner-element table-stats-side column-elims' data-label="ELIMS">
-                            <div className='table-inner-element'>
-                                <span className='team-elims' id={`team-elims-${team.id}`}>{team.elms}</span>
-                            </div>
+                            <span className='team-elims'>{team.team_elms}</span>
                         </div>
                         <div className='table-inner-element table-stats-side column-total' data-label="TOTAL">
-                            <div className='table-inner-element'>
-                                <span className='team-total' id={`team-total-${team.id}`}>{team.total}</span>
-                            </div>
+                            <span className='team-total'>{team.team_points + team.team_elms}</span>
                         </div>
                     </div>
                 ))}

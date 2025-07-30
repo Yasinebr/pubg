@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useGame } from '../contexts/GameContext';
 import { useMatch } from '../contexts/MatchContext';
-import { useNavigate } from 'react-router-dom';
+// [تغییر ۱]: Link را برای ساخت لینک‌های جدید ایمپورت می‌کنیم
+import { useNavigate, Link } from 'react-router-dom';
+import { io, Socket } from 'socket.io-client';
 import './MatchSelector.css';
 
 interface Match {
@@ -9,7 +11,7 @@ interface Match {
     name: string;
 }
 
-// کامپوننت جدید برای پنجره Modal
+// کامپوننت Modal برای کپی کردن تیم‌ها (این بخش به طور کامل حفظ شده است)
 const CopyTeamsModal = ({
     isOpen,
     onClose,
@@ -24,10 +26,8 @@ const CopyTeamsModal = ({
     destinationMatch: Match | null;
 }) => {
     const [sourceMatchId, setSourceMatchId] = useState<number | ''>('');
-
     if (!isOpen || !destinationMatch) return null;
 
-    // لیست مچ‌های دیگر برای نمایش در دراپ‌داون (مچ مقصد را حذف می‌کنیم)
     const sourceOptions = matches.filter(m => m.id !== destinationMatch.id);
 
     const handleConfirm = () => {
@@ -50,9 +50,7 @@ const CopyTeamsModal = ({
                 >
                     <option value="" disabled>-- Select a source match --</option>
                     {sourceOptions.map(match => (
-                        <option key={match.id} value={match.id}>
-                            {match.name}
-                        </option>
+                        <option key={match.id} value={match.id}>{match.name}</option>
                     ))}
                 </select>
                 <div className="modal-actions">
@@ -68,27 +66,32 @@ const CopyTeamsModal = ({
 export const MatchSelector = () => {
     const { selectedGameId } = useGame();
     const { setSelectedMatchId } = useMatch();
-
     const [matches, setMatches] = useState<Match[]>([]);
     const [newMatchName, setNewMatchName] = useState('');
     const navigate = useNavigate();
     const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
-
-    // State های جدید برای مدیریت Modal
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [destinationMatch, setDestinationMatch] = useState<Match | null>(null);
 
-    const fetchMatches = () => {
-        if (selectedGameId) {
+    // تمام منطق fetch و socket شما حفظ شده است
+    useEffect(() => {
+        if (!selectedGameId) return;
+
+        const fetchMatches = () => {
             fetch(`${apiUrl}/api/games/${selectedGameId}/matches`)
                 .then(res => res.json())
                 .then(data => setMatches(data))
                 .catch(err => console.error("Failed to fetch matches:", err));
-        }
-    };
+        };
 
-    useEffect(() => {
         fetchMatches();
+        const socket: Socket = io(process.env.REACT_APP_SOCKET_URL || 'http://localhost:3001');
+        socket.on('matchesUpdated', fetchMatches);
+
+        return () => {
+            socket.off('matchesUpdated', fetchMatches);
+            socket.disconnect();
+        };
     }, [selectedGameId, apiUrl]);
 
     const handleMatchSelect = (id: number) => {
@@ -99,56 +102,39 @@ export const MatchSelector = () => {
     const handleCreateMatch = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!newMatchName.trim() || !selectedGameId) return;
-
-        try {
-            const response = await fetch(`${apiUrl}/api/games/${selectedGameId}/matches`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: newMatchName }),
-            });
-            if (!response.ok) throw new Error('Failed to create match');
-
-            fetchMatches(); // لیست را دوباره می‌گیریم
-            setNewMatchName('');
-        } catch (error) {
-            console.error(error);
-            alert('Error creating new match');
-        }
+        await fetch(`${apiUrl}/api/games/${selectedGameId}/matches`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: newMatchName }),
+        });
+        setNewMatchName('');
     };
 
-    // تابع برای باز کردن Modal
+    // تمام منطق مربوط به Modal کپی کردن تیم‌ها نیز حفظ شده است
     const handleOpenCopyModal = (match: Match) => {
         setDestinationMatch(match);
         setIsModalOpen(true);
     };
 
-    // تابع برای تایید و ارسال درخواست کپی
     const handleConfirmCopy = async (sourceMatchId: number) => {
         if (!destinationMatch) return;
-
         try {
             const response = await fetch(`${apiUrl}/api/matches/copy-teams`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    sourceMatchId: sourceMatchId,
-                    destinationMatchId: destinationMatch.id,
-                }),
+                body: JSON.stringify({ sourceMatchId, destinationMatchId: destinationMatch.id }),
             });
             const result = await response.json();
-            if (!response.ok) {
-                throw new Error(result.error || 'Failed to copy teams.');
-            }
+            if (!response.ok) throw new Error(result.error || 'Failed to copy teams.');
             alert(result.message);
-            setIsModalOpen(false); // بستن Modal
+            setIsModalOpen(false);
         } catch (error: any) {
-            console.error(error);
             alert(`Error: ${error.message}`);
         }
     };
 
     if (!selectedGameId) {
-        return <div>Please select a game first.</div>;
+        return <div style={{color: 'white', textAlign: 'center', padding: '40px'}}>Please select a game first.</div>;
     }
 
     return (
@@ -160,9 +146,8 @@ export const MatchSelector = () => {
                 matches={matches}
                 destinationMatch={destinationMatch}
             />
-
             <div className="card">
-                <h2>Create New Match for Game #{selectedGameId}</h2>
+                <h2>Create New Match</h2>
                 <form onSubmit={handleCreateMatch} className="create-form">
                     <input
                         type="text"
@@ -170,31 +155,33 @@ export const MatchSelector = () => {
                         onChange={(e) => setNewMatchName(e.target.value)}
                         placeholder="Enter new match name"
                     />
-                    <button type="submit" className="create-button">
-                        Create Match
-                    </button>
+                    <button type="submit" className="create-button">Create</button>
                 </form>
             </div>
-
             <div className="card">
                 <h2>Select Existing Match</h2>
                 {matches.length > 0 ? (
                     <div className="list">
+                        {/* [تغییر کلیدی]: ساختار نمایش لیست برای اضافه کردن دکمه‌های جدید */}
                         {matches.map(match => (
-                            <div key={match.id} className="match-item">
+                            <div key={match.id} className="match-item-row">
                                 <button onClick={() => handleMatchSelect(match.id)} className="select-button">
                                     {match.name} (ID: {match.id})
                                 </button>
-                                {/* دکمه جدید برای کپی کردن */}
-                                <button
-                                    onClick={() => handleOpenCopyModal(match)}
-                                    className="copy-button"
-                                    title={`Copy teams to ${match.name}`}
-                                    // اگر کمتر از ۲ مچ وجود داشته باشد، دکمه غیرفعال می‌شود
-                                    disabled={matches.length < 2}
-                                >
-                                    Copy Teams
-                                </button>
+                                <div className="match-actions">
+                                    {/* دکمه جدید برای رده‌بندی مچ */}
+                                    <Link to={`/matches/${match.id}/standings`} className="action-button standings-button">
+                                        Standings
+                                    </Link>
+                                    {/* دکمه قبلی برای کپی کردن تیم‌ها */}
+                                    <button
+                                        onClick={() => handleOpenCopyModal(match)}
+                                        className="action-button copy-button"
+                                        disabled={matches.length < 2}
+                                    >
+                                        Copy Teams
+                                    </button>
+                                </div>
                             </div>
                         ))}
                     </div>
