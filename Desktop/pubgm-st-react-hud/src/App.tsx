@@ -10,7 +10,7 @@ import Table from './HUD/Table/Table';
 import Control from './HUD/Control/Control';
 import { AdminPanel } from './HUD/AdminPanel/AdminPanel';
 import OverallTable from './HUD/OverallTable/OverallTable';
-import MatchStandings from './HUD/MatchStandings/MatchStandings';
+import FinalStandings from './HUD/FinalStandings/FinalStandings';
 
 function App() {
     return (
@@ -27,7 +27,7 @@ function App() {
                         <Route path="/admin/:matchId" element={<AdminPanel />} />
                         <Route path="/games/:gameId/overall" element={<OverallTable />} />
                         <Route path="/overall" element={<Navigate to="/games" replace />} />
-                        <Route path="/matches/:matchId/standings" element={<MatchStandings />} />
+                        <Route path="/games/:gameId/final-standings" element={<FinalStandings />} />
 
                         {/* اگر کاربر آدرس اشتباهی وارد کرد، او را به مسیر اصلی هدایت کن */}
                         <Route path="*" element={<Navigate to="/" replace />} />

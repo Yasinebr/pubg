@@ -232,6 +232,18 @@ app.post('/api/teams/eliminate', (req: Request, res: Response) => {
     });
 });
 
+// این مسیر جدید را به server.ts اضافه کنید
+app.post('/api/teams/revive', (req: Request, res: Response) => {
+    const { match_id, team_id } = req.body.data;
+    const query = 'UPDATE team_points SET is_eliminated = 0 WHERE team_id = ? AND match_id = ?';
+    db.run(query, [team_id, match_id], function(err: Error | null) {
+        if (err) return res.status(500).json({ error: 'Failed to revive team.' });
+        // بعد از آپدیت، داده‌های جدید را برای همه ارسال می‌کنیم
+        getUpdatedMatchDataAndEmit(match_id);
+        res.json({ message: `Team ${team_id} revived.` });
+    });
+});
+
 app.post('/api/update_points/:match_id', (req, res) => {
     const { match_id } = req.params;
     const { team_id, team_points } = req.body.data;

@@ -669,6 +669,14 @@ button {
   transform: scale(1.05); /* کمی بزرگتر دیده می‌شود */
   transition: background-color 0.2s ease, transform 0.2s ease; /* انیمیشن نرم برای تغییر حالت */
 }
-
 }
 
+.eliminated-team {
+  color: red;
+  text-decoration: line-through; /* این خط یک خط روی متن می‌کشد */
+  opacity: 0.6; /* کمی هم متن را محو می‌کند */
+}
+
+.revive-button {
+  background-color: #007bff; /* یک رنگ آبی برای بازگرداندن */
+}

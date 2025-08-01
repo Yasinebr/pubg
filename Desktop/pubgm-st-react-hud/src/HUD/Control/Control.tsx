@@ -44,7 +44,10 @@ function Control() {
         // این رویداد داده‌های کامل و به‌روز شده را به همراه خود دارد
         socket.on('matchDataUpdated', (updatedData: CombinedData[]) => {
             console.log('Received matchDataUpdated event with', updatedData.length, 'teams.');
-            setCombinedData(updatedData);
+
+            const sortedData = [...updatedData].sort((a, b) => a.id - b.id);
+
+            setCombinedData(sortedData);
             setIsLoading(false); // بعد از دریافت اولین داده، لودینگ تمام می‌شود
         });
 
@@ -74,6 +77,14 @@ function Control() {
         }).catch(error => console.error("Failed to update elims:", error));
     };
 
+    const handleReviveTeam = (teamId: number) => {
+        if (!matchId) return;
+        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+        axios.post(`${apiUrl}/api/teams/revive`, {
+            data: { match_id: matchId, team_id: teamId }
+        }).catch(error => console.error("Failed to revive team:", error));
+    };
+
     const handleEliminateTeam = (teamId: number) => {
         if (!matchId) return;
         // از window.confirm استفاده نکنید چون در برخی محیط‌ها کار نمی‌کند.
@@ -83,6 +94,7 @@ function Control() {
             data: { match_id: matchId, team_id: teamId }
         }).catch(error => console.error("Failed to eliminate team:", error));
     };
+
 
     if (!matchId) {
         return (
@@ -120,20 +132,27 @@ function Control() {
                             <div className='control-div-upper'>
                                 <div className='control-div control-place'>{index + 1}</div>
                                 <div className='control-div control-team-name'>
-                                    <p className='team-name' id={`team-name-${team.id}`}>{team.name}</p>
+                                    <p className={`team-name ${team.is_eliminated === 1 ? 'eliminated-team' : ''}`}
+                                       id={`team-name-${team.id}`}>
+                                        {team.initial}
+                                    </p>
                                 </div>
 
                                 {/* ستون PLC */}
                                 <div className='control-div control-team-points'>
                                     <div className='flex-div'>
                                         <div className='control-m-p-div'>
-                                            <button className='control-button player-knocked-button' onClick={() => handlePointsChange(team.id, -1)}>-</button>
+                                            <button className='control-button player-knocked-button'
+                                                    onClick={() => handlePointsChange(team.id, -1)}>-
+                                            </button>
                                         </div>
                                         <div className='control-points-div'>
                                             <span className='auto-points'>{team.team_points}</span>
                                         </div>
                                         <div className='control-m-p-div'>
-                                            <button className='control-button player-knocked-button' onClick={() => handlePointsChange(team.id, 1)}>+</button>
+                                            <button className='control-button player-knocked-button'
+                                                    onClick={() => handlePointsChange(team.id, 1)}>+
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -142,21 +161,35 @@ function Control() {
                                 <div className='control-div control-team-points'>
                                     <div className='flex-div'>
                                         <div className='control-m-p-div'>
-                                            <button className='control-button player-knocked-button' onClick={() => handleElimsChange(team.id, -1)}>-</button>
+                                            <button className='control-button player-knocked-button'
+                                                    onClick={() => handleElimsChange(team.id, -1)}>-
+                                            </button>
                                         </div>
                                         <div className='control-points-div'>
                                             <span className='auto-points'>{team.team_elms}</span>
                                         </div>
                                         <div className='control-m-p-div'>
-                                            <button className='control-button player-knocked-button' onClick={() => handleElimsChange(team.id, 1)}>+</button>
+                                            <button className='control-button player-knocked-button'
+                                                    onClick={() => handleElimsChange(team.id, 1)}>+
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
 
                                 <div className='control-div control-team-points'>
-                                    <button className='control-button eliminate-button' onClick={() => handleEliminateTeam(team.id)} disabled={team.is_eliminated === 1}>
-                                        E
-                                    </button>
+                                    {team.is_eliminated === 1 ? (
+                                        // اگر تیم حذف شده، دکمه "بازگرداندن" را نشان بده
+                                        <button className='control-button revive-button'
+                                                onClick={() => handleReviveTeam(team.id)}>
+                                            R
+                                        </button>
+                                    ) : (
+                                        // در غیر این صورت، دکمه "حذف" را نشان بده
+                                        <button className='control-button eliminate-button'
+                                                onClick={() => handleEliminateTeam(team.id)}>
+                                            E
+                                        </button>
+                                    )}
                                 </div>
 
                             </div>
@@ -169,7 +202,7 @@ function Control() {
             </div>
         </div>
     </div>
-);
+    );
 }
 
 export default Control;

@@ -158,6 +158,15 @@ export const MatchSelector = () => {
                     <button type="submit" className="create-button">Create</button>
                 </form>
             </div>
+
+            <div className="select-match-container">
+                <h2>Final Standings</h2>
+                <p>View the final combined standings for this game.</p>
+                <Link to={`/games/${selectedGameId}/final-standings`} className="action-button">
+                    View Final Standings
+                </Link>
+            </div>
+
             <div className="card">
                 <h2>Select Existing Match</h2>
                 {matches.length > 0 ? (
@@ -169,11 +178,6 @@ export const MatchSelector = () => {
                                     {match.name} (ID: {match.id})
                                 </button>
                                 <div className="match-actions">
-                                    {/* دکمه جدید برای رده‌بندی مچ */}
-                                    <Link to={`/matches/${match.id}/standings`} className="action-button standings-button">
-                                        Standings
-                                    </Link>
-                                    {/* دکمه قبلی برای کپی کردن تیم‌ها */}
                                     <button
                                         onClick={() => handleOpenCopyModal(match)}
                                         className="action-button copy-button"

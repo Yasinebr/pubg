@@ -1,0 +1,47 @@
+/* FinalStandings.css */
+.final-standings-page {
+  background-color: transparent; /* پس‌زمینه را کاملا شفاف می‌کند */
+  padding: 2rem;
+  color: white; /* رنگ متن را برای خوانایی حفظ می‌کنیم */
+  min-height: 100vh;
+}
+
+.final-title {
+    text-align: center;
+    font-size: 2.5rem;
+    margin-bottom: 2rem;
+    text-transform: uppercase;
+}
+
+.two-column-layout {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    flex-wrap: wrap;
+}
+
+.table-column {
+    width: 600px; /* عرض هر ستون */
+}
+
+.table-header-final, .team-row-final {
+    display: flex;
+    padding: 10px;
+    border-bottom: 1px solid #333;
+    align-items: center;
+}
+
+.table-header-final {
+    font-weight: bold;
+    color: #a0a0a0;
+}
+
+.col-rank { width: 10%; text-align: center; }
+.col-team { width: 50%; display: flex; align-items: center; gap: 15px; }
+.col-pts { width: 13.3%; text-align: center; }
+
+.team-logo-final {
+    width: 30px;
+    height: 30px;
+    object-fit: contain;
+}

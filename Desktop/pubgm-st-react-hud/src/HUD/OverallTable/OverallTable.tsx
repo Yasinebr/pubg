@@ -97,7 +97,7 @@ const OverallTable: React.FC = () => {
                                 <img src={`${apiUrl}/${team.logo}`} alt={`${team.name} logo`} className='team-logo'/>
                             </div>
                             <div className='team-name-m'>
-                                <span className='team-name-tb'>{team.initial.toUpperCase()}</span>
+                                <span className='team-name-tb'>{team.name}</span>
                             </div>
                         </div>
                         <div className="column-stats">{team.total_pts}</div>
