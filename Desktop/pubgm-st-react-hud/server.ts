@@ -55,9 +55,6 @@ app.use(express.json());
 app.use('/team_data/team_logos', express.static(path.join(__dirname, '..', 'team_data/team_logos')));
 
 
-// =================================================================
-// ## تابع کمکی مرکزی برای ارسال داده‌های مچ ##
-// =================================================================
 const getUpdatedMatchDataAndEmit = (matchId: string, targetSocket?: import('socket.io').Socket) => {
     const query = `
         SELECT
@@ -77,8 +74,13 @@ const getUpdatedMatchDataAndEmit = (matchId: string, targetSocket?: import('sock
         const target = targetSocket ? targetSocket : io.to(roomName);
         target.emit('matchDataUpdated', rows);
 
-        // [تغییر کلیدی]: بعد از هر آپدیت مچ، رده‌بندی کلی را هم آپدیت می‌کنیم
+        // [تغییر کلیدی]: این بخش را اضافه یا جایگزین کنید
+        // همیشه بعد از هر آپدیت مچ، رده‌بندی کلی را هم آپدیت می‌کنیم
         db.get('SELECT game_id FROM matches WHERE id = ?', [matchId], (err, matchRow: { game_id: string }) => {
+            if (err) {
+                console.error(`Error fetching game_id for match ${matchId}:`, err.message);
+                return;
+            }
             if (matchRow) {
                 getUpdatedOverallStandingsAndEmit(matchRow.game_id);
             }
@@ -201,13 +203,18 @@ app.delete('/api/games/:gameId/matches', (req: Request, res: Response) => {
 
 const getUpdatedOverallStandingsAndEmit = (gameId: string) => {
     const query = `
-        SELECT t.name, t.initial, t.logo,
-               SUM(tp.team_points) as total_pts, SUM(tp.team_elms) as total_elms,
-               (SUM(tp.team_points) + SUM(tp.team_elms)) as overall_total
+        SELECT
+            t.name,
+            t.initial,
+            t.logo,
+            SUM(tp.team_points) as total_pts,
+            SUM(tp.team_elms) as total_elms,
+            (SUM(tp.team_points) + SUM(tp.team_elms)) as overall_total,
+            MAX(tp.is_eliminated) as is_eliminated
         FROM teams t
         JOIN team_points tp ON t.id = tp.team_id
         WHERE t.match_id IN (SELECT id FROM matches WHERE game_id = ?)
-        GROUP BY t.name, t.initial, t.logo
+        GROUP BY t.name, t.initial, t.logo -- گروه‌بندی فقط بر اساس نام
         ORDER BY overall_total DESC, total_pts DESC, total_elms DESC;
     `;
     db.all(query, [gameId], (err, rows) => {

@@ -1,47 +1,42 @@
-/* FinalStandings.css */
-.final-standings-page {
-  background-color: transparent; /* پس‌زمینه را کاملا شفاف می‌کند */
-  padding: 2rem;
-  color: white; /* رنگ متن را برای خوانایی حفظ می‌کنیم */
-  min-height: 100vh;
+.transparent-container,
+.transparent-container * {
+  background: transparent !important;
+  background-color: transparent !important;
 }
 
-.final-title {
+.transparent-container .page-title {
+    color: white; /* رنگ عنوان را سفید نگه می‌داریم */
     text-align: center;
-    font-size: 2.5rem;
     margin-bottom: 2rem;
-    text-transform: uppercase;
+    font-size: 2rem;
 }
 
-.two-column-layout {
-    display: flex;
-    justify-content: center;
-    gap: 40px;
-    flex-wrap: wrap;
+/* برای اینکه خطوط جداکننده دیده شوند، به آنها یک رنگ ملایم می‌دهیم */
+.transparent-container .table-header-m,
+.transparent-container .team-m {
+    border-color: rgba(255, 255, 255, 0.2) !important;
 }
 
-.table-column {
-    width: 600px; /* عرض هر ستون */
+/* حفظ رنگ متن برای خوانایی */
+.transparent-container .column-rank,
+.transparent-container .column-team,
+.transparent-container .column-stats,
+.transparent-container .team-name-tb {
+    color: white;
 }
 
-.table-header-final, .team-row-final {
-    display: flex;
-    padding: 10px;
-    border-bottom: 1px solid #333;
-    align-items: center;
+/* استایل تیم حذف شده */
+.transparent-container .team-m.eliminated .team-name-tb,
+.transparent-container .team-m.eliminated .column-rank,
+.transparent-container .team-m.eliminated .column-stats {
+    color: red !important;
+    text-decoration: line-through;
+    opacity: 0.7;
 }
 
-.table-header-final {
-    font-weight: bold;
-    color: #a0a0a0;
-}
-
-.col-rank { width: 10%; text-align: center; }
-.col-team { width: 50%; display: flex; align-items: center; gap: 15px; }
-.col-pts { width: 13.3%; text-align: center; }
-
-.team-logo-final {
-    width: 30px;
-    height: 30px;
-    object-fit: contain;
+.loading-message {
+    color: white;
+    text-align: center;
+    font-size: 1.5rem;
+    padding-top: 5rem;
 }

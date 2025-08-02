@@ -1,65 +1,143 @@
-/* src/HUD/OverallTable/OverallTable.css */
+/* این قوانین را در فایل OverallTable.css خود پیدا و جایگزین کنید */
+
 
 .overall-standings-page {
     padding: 20px;
     font-family: sans-serif;
+    color: #ecf0f1;
+    background: transparent;
 }
 
-.overall-standings-page h1 {
+.page-title {
     text-align: center;
-    color: #ecf0f1;
     margin-bottom: 30px;
 }
 
-.overall-standings-page .two-column-layout {
+.two-column-layout {
     display: flex;
     justify-content: center;
-    gap: 20px;
+    gap: 20px; /* فاصله بین ستون‌ها در دسکتاپ */
     max-width: 1400px;
     margin: auto;
 }
 
-.overall-standings-page .table-column {
+.table-column {
     flex: 1;
     min-width: 0;
-    max-width: 700px;
+    background: transparent;
 }
 
-.overall-standings-page .table-header-m,
-.overall-standings-page .team-m {
+.table-header-m,
+.team-m {
     display: flex;
     align-items: center;
     width: 100%;
     padding: 10px;
     border-bottom: 1px solid rgba(127, 140, 141, 0.3);
+    background: transparent;
 }
 
-.overall-standings-page .table-header-m {
-    background-color: transparent !important;
+.table-header-m {
     color: #bdc3c7;
     font-weight: bold;
     font-size: 0.9rem;
 }
 
-.overall-standings-page .team-m {
-    background-color: transparent !important;
-    color: #ecf0f1;
+.column-rank { flex: 0 0 50px; text-align: center; }
+.column-team { flex: 1 1 50%; }
+.column-stats { flex: 0 0 80px; text-align: center; font-weight: bold; }
+
+.team-team-side { display: flex; align-items: center; }
+.team-logo-m { width: 40px; height: 30px; margin-right: 15px; flex-shrink: 0; }
+.team-logo { width: 100%; height: 100%; object-fit: contain; }
+.team-name-m { font-weight: bold; }
+
+/* در حالت دسکتاپ، نام اختصاری را مخفی می‌کنیم */
+.mobile-only {
+    display: none;
 }
 
-.overall-standings-page .column-rank { flex: 0 0 50px; text-align: center; }
-.overall-standings-page .column-team { flex: 1 1 50%; }
-.overall-standings-page .column-stats { flex: 0 0 80px; text-align: center; font-weight: bold; }
 
-.overall-standings-page .team-team-side { display: flex; align-items: center; }
-.overall-standings-page .team-logo-m { width: 40px; height: 30px; margin-right: 15px; flex-shrink: 0; }
-.overall-standings-page .team-logo { width: 100%; height: 100%; object-fit: contain; }
-.overall-standings-page .team-name-m { font-weight: bold; }
+/* ===================================== */
+/* ====   استایل‌های مخصوص موبایل   ==== */
+/* ===================================== */
+@media screen and (max-width: 768px) {
+    .overall-standings-page {
+        padding: 2px; /* کاهش شدید پدینگ کلی */
+    }
 
-/* این کد را به انتهای فایل OverallTable.css اضافه کنید */
+    /* دو ستون کنار هم با عرض کمتر */
+    .two-column-layout {
+        gap: 1px; /* کاهش شدید فاصله بین ستون‌ها */
+    }
 
-.overall-standings-page .table-header-m .column-team {
-    /* 55px = 40px عرض لوگو + 15px فاصله راست آن
-       این کار عنوان را به سمت راست هل می‌دهد تا با نام تیم‌ها تراز شود
-    */
-    padding-left: 55px;
+    .table-column {
+        width: 100%;
+        min-width: 0;
+    }
+
+    /* ۱. نام کامل را مخفی می‌کنیم */
+    .desktop-only {
+        display: none;
+    }
+
+    /* ۲. نام اختصاری را نمایش می‌دهیم */
+    .mobile-only {
+        display: block;
+    }
+
+    /* ۳. لوگو را بسیار کوچک‌تر می‌کنیم */
+    .team-logo-m {
+        width: 12px;
+        height: 12px;
+        margin-right: 2px;
+    }
+
+    /* ۴. فونت‌ها و پدینگ‌ها را بسیار کوچک‌تر می‌کنیم */
+    .table-header-m,
+    .team-m {
+        padding: 2px 1px;
+        font-size: 0.5rem;
+        line-height: 1.1;
+    }
+    .table-header-m {
+        font-size: 0.45rem;
+        font-weight: bold;
+        padding: 1px;
+    }
+    .page-title {
+        font-size: 0.9rem;
+        margin-bottom: 5px;
+    }
+
+    /* ۵. عرض ستون‌ها را برای حالت بسیار فشرده تنظیم می‌کنیم */
+    .column-rank {
+        flex: 0 0 15px;
+        font-size: 0.45rem;
+        text-align: center;
+    }
+    .column-team {
+        flex: 1 1 40%;
+        font-size: 0.45rem;
+    }
+    .column-stats {
+        flex: 0 0 18px;
+        font-size: 0.45rem;
+        text-align: center;
+    }
+
+    /* نام تیم‌ها را کوچک‌تر می‌کنیم */
+    .team-name-m {
+        font-size: 0.45rem;
+        font-weight: normal;
+    }
+}
+
+/* کد برای شفاف کردن قطعی پس‌زمینه */
+
+.overall-standings-page .table-column,
+.overall-standings-page .table-header-m,
+.overall-standings-page .team-m {
+    background: transparent !important;
+    background-color: transparent !important;
 }
