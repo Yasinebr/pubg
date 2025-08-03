@@ -42,12 +42,47 @@ const db = new sqlite3.Database(dbPath, (err) => {
         console.error("Error opening database:", err.message);
     } else {
         console.log("Database connected successfully.");
+
+        // =======================================================
+        // [کد جدید]: این بخش اضافه شده است
+        // =======================================================
+        const createLibraryTableQuery = `
+        CREATE TABLE IF NOT EXISTS team_library (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL UNIQUE,
+            initial TEXT NOT NULL,
+            logo_path TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+        `;
+
+        db.run(createLibraryTableQuery, (err) => {
+            if (err) {
+                return console.error("Error creating team_library table:", err.message);
+            }
+            console.log("Table 'team_library' is ready.");
+        });
+        // =======================================================
+
         db.exec('PRAGMA foreign_keys = ON;', (err) => {
             if (err) console.error("Error enabling foreign keys:", err.message);
             else console.log("Foreign keys enabled.");
         });
     }
 });
+
+const libraryStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    // لوگوها در این پوشه جدید ذخیره می‌شوند
+    const dir = path.join(__dirname, 'library_team_logos/');
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    cb(null, dir);
+  },
+  filename: (req, file, cb) => {
+    cb(null, `${Date.now()}-${file.originalname}`);
+  }
+});
+const uploadLibrary = multer({ storage: libraryStorage });
 
 // ----------------- MIDDLEWARE -----------------
 app.use(cors({ origin: allowedOrigin }));
@@ -362,6 +397,25 @@ app.post('/api/admin/update-logo/:match_id', upload.single('logo_file'), (req, r
     });
 });
 
+app.post('/api/admin/update-initial/:match_id', (req, res) => {
+    const { match_id } = req.params;
+    const { team_id, new_initial } = req.body.data;
+
+    if (!new_initial) {
+        return res.status(400).json({ error: 'New initial is required.' });
+    }
+
+    const query = 'UPDATE teams SET initial = ? WHERE id = ? AND match_id = ?';
+    db.run(query, [new_initial, team_id, match_id], function(err) {
+        if (err) {
+            return res.status(500).send('Failed to update team initial.');
+        }
+        // داده‌های آپدیت‌شده را برای همه ارسال می‌کنیم
+        getUpdatedMatchDataAndEmit(match_id);
+        res.status(200).send({ message: 'Team initial updated successfully' });
+    });
+});
+
 // ## Copy Teams Route (Optimized & TypeScript errors fixed) ##
 app.post('/api/matches/copy-teams', async (req: Request, res: Response) => {
     const { sourceMatchId, destinationMatchId } = req.body;
@@ -481,11 +535,136 @@ app.post('/api/players_update/:match_id', (req, res) => {
     res.json({ success: 'Successfully sent player data!' });
 });
 
+app.post('/api/admin/add-team-from-library/:match_id', (req: Request, res: Response) => {
+    const { match_id } = req.params;
+    const { library_team_id } = req.body;
+
+    if (!library_team_id) {
+        return res.status(400).json({ error: 'Library team ID is required.' });
+    }
+
+    // ۱. ابتدا اطلاعات تیم را از بانک می‌خوانیم
+    const getTeamQuery = 'SELECT name, initial, logo_path FROM team_library WHERE id = ?';
+    db.get(getTeamQuery, [library_team_id], (err, teamData: any) => {
+        if (err) return res.status(500).json({ error: 'Failed to find team in library.' });
+        if (!teamData) return res.status(404).json({ error: 'Team not found in library.' });
+
+        // ۲. تیم را به جدول `teams` برای مچ فعلی اضافه می‌کنیم
+        const teamQuery = 'INSERT INTO teams (match_id, name, initial, logo) VALUES (?, ?, ?, ?)';
+        db.run(teamQuery, [match_id, teamData.name, teamData.initial, teamData.logo_path], function(err) {
+            if (err) return res.status(500).send('Failed to add team to match.');
+
+            const newTeamId = this.lastID;
+
+            // ۳. امتیازات اولیه تیم را در جدول `team_points` ثبت می‌کنیم
+            const pointsQuery = 'INSERT INTO team_points (match_id, team_id) VALUES (?, ?)';
+            db.run(pointsQuery, [match_id, newTeamId], (pointsErr) => {
+                if (pointsErr) return res.status(500).send('Failed to initialize team points.');
+
+                // ۴. داده‌های آپدیت‌شده را برای همه کلاینت‌ها ارسال می‌کنیم
+                getUpdatedMatchDataAndEmit(match_id);
+                res.status(200).send({ message: 'Team added from library successfully!' });
+            });
+        });
+    });
+});
+
+app.post('/api/library/teams/:teamId/update-details', (req: Request, res: Response) => {
+    const { teamId } = req.params;
+    const { team_name, team_initial } = req.body;
+
+    if (!team_name || !team_initial) {
+        return res.status(400).json({ error: 'New name and initial are required.' });
+    }
+
+    const query = 'UPDATE team_library SET name = ?, initial = ? WHERE id = ?';
+    db.run(query, [team_name, team_initial, teamId], function(err) {
+        if (err) return res.status(500).json({ error: 'Failed to update team details.' });
+        res.status(200).json({ message: 'Team details updated successfully.' });
+    });
+});
+
+// [جدید]: مسیری برای آپدیت کردن لوگوی تیم در بانک
+app.post('/api/library/teams/:teamId/update-logo', uploadLibrary.single('logo_file'), (req: Request, res: Response) => {
+    const { teamId } = req.params;
+    const logoFile = req.file;
+
+    if (!logoFile) {
+        return res.status(400).json({ error: 'Logo file is required.' });
+    }
+
+    const logoPath = `library_team_logos/${logoFile.filename}`;
+    const query = 'UPDATE team_library SET logo_path = ? WHERE id = ?';
+    db.run(query, [logoPath, teamId], function(err) {
+        if (err) return res.status(500).json({ error: 'Failed to update team logo.' });
+        res.status(200).json({ message: 'Team logo updated successfully.' });
+    });
+});
+
+// [جدید]: مسیری برای حذف یک تیم از بانک
+app.delete('/api/library/teams/:teamId', (req: Request, res: Response) => {
+    const { teamId } = req.params;
+
+    const query = 'DELETE FROM team_library WHERE id = ?';
+    db.run(query, [teamId], function(err) {
+        if (err) return res.status(500).json({ error: 'Failed to delete team from library.' });
+        res.status(200).json({ message: 'Team deleted successfully from library.' });
+    });
+});
+
 app.get('/api/team_elims/:match_id', (req, res) => {
     const { match_id } = req.params;
     db.all('SELECT team_id, team_elms FROM team_points WHERE match_id = ?', [match_id], (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ data: rows });
+    });
+});
+
+app.get('/api/library/teams', (req: Request, res: Response) => {
+    const searchTerm = req.query.search || '';
+
+    // [تغییر کلیدی]: کوئری را طوری تغییر می‌دهیم که هم نام و هم تگ را جستجو کند
+    const query = `
+        SELECT * FROM team_library 
+        WHERE name LIKE ? OR initial LIKE ? 
+        ORDER BY name ASC
+    `;
+    // هر دو پارامتر را با عبارت جستجو پر می‌کنیم
+    const params = [`%${searchTerm}%`, `%${searchTerm}%`];
+
+    db.all(query, params, (err, rows) => {
+        if (err) {
+            return res.status(500).json({ error: 'Failed to fetch teams from library.' });
+        }
+        res.json(rows);
+    });
+});
+
+app.post('/api/library/teams', uploadLibrary.single('logo_file'), (req: Request, res: Response) => {
+    const { team_name, team_initial } = req.body;
+    const logoFile = req.file;
+
+    if (!team_name || !team_initial || !logoFile) {
+        return res.status(400).json({ error: 'Team name, initial, and logo are required.' });
+    }
+
+    const logoPath = `library_team_logos/${logoFile.filename}`;
+    const query = 'INSERT INTO team_library (name, initial, logo_path) VALUES (?, ?, ?)';
+
+    db.run(query, [team_name, team_initial, logoPath], function (err) {
+        if (err) {
+            // خطای UNIQUE برای نام تیم را مدیریت می‌کند
+            if (err.message.includes('UNIQUE constraint failed')) {
+                return res.status(409).json({ error: 'A team with this name already exists in the library.' });
+            }
+            return res.status(500).json({ error: 'Failed to add team to library.' });
+        }
+        res.status(201).json({
+            id: this.lastID,
+            name: team_name,
+            initial: team_initial,
+            logo_path: logoPath
+        });
     });
 });
 

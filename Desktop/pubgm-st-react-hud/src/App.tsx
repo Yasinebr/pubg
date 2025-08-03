@@ -11,6 +11,7 @@ import Control from './HUD/Control/Control';
 import { AdminPanel } from './HUD/AdminPanel/AdminPanel';
 import OverallTable from './HUD/OverallTable/OverallTable';
 import FinalStandings from './HUD/FinalStandings/FinalStandings';
+import TeamLibrary from './HUD/TeamLibrary/TeamLibrary';
 
 function App() {
     return (
@@ -22,6 +23,7 @@ function App() {
                         <Route path="/games" element={<GameSelector />} />
                         <Route path="/" element={<Home />} />
                         <Route path="/matches" element={<MatchSelector />} />
+                        <Route path="/library" element={<TeamLibrary />} />
                         <Route path="/table/:matchId" element={<Table />} />
                         <Route path="/control/:matchId" element={<Control />} />
                         <Route path="/admin/:matchId" element={<AdminPanel />} />

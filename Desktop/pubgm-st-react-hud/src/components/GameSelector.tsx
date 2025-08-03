@@ -3,6 +3,7 @@ import { useGame } from '../contexts/GameContext';
 import { useNavigate } from 'react-router-dom';
 import io from 'socket.io-client'; // [۱] ایمپورت کردن io
 import './GameSelector.css';
+import { Link } from 'react-router-dom';
 
 interface Game {
     id: number;
@@ -85,53 +86,63 @@ const GameSelector: React.FC = () => {
     };
 
     return (
-        <div className="game-selector-container">
-            {/* [اصلاح]: دکمه از حالت شرطی خارج شد و همیشه نمایش داده می‌شود */}
-            <div className="card">
-                <button
-                    onClick={() => navigate('/')}
-                    className="select-button"
-                >
-                    Back to Home
-                </button>
-            </div>
-
-            <div className="card">
-                <h2>Create New Game (Tournament)</h2>
-                <form onSubmit={handleCreateGame} className="create-form">
-                    <input
-                        type="text"
-                        value={newGameName}
-                        onChange={(e) => setNewGameName(e.target.value)}
-                        placeholder="Enter new game name"
-                    />
-                    <button type="submit" className="create-button">
-                        Create
-                    </button>
-                </form>
-            </div>
-
-            <div className="card">
-                <h2>Select Existing Game</h2>
-                {games.length > 0 ? (
-                    <div className="list">
-                        {games.map(game => (
-                            <div className="list-item" key={game.id}>
-                                <button onClick={() => handleGameSelect(game.id)} className="select-button">
-                                    {game.name} (ID: {game.id})
-                                </button>
-                                <button onClick={() => handleDeleteGame(game.id)} className="delete-button">
-                                    Delete
-                                </button>
-                            </div>
-                        ))}
-                    </div>
-                ) : (
-                    <p>No existing games. Please create a new one.</p>
-                )}
-            </div>
+    <div className="game-selector-container">
+        {/* کارت بازگشت به خانه */}
+        <div className="card">
+            <button
+                onClick={() => navigate('/')}
+                className="select-button"
+            >
+                Back to Home
+            </button>
         </div>
-    );
+
+        {/* کارت ساخت بازی جدید */}
+        <div className="card">
+            <h2>Create New Game (Tournament)</h2>
+            <form onSubmit={handleCreateGame} className="create-form">
+                <input
+                    type="text"
+                    value={newGameName}
+                    onChange={(e) => setNewGameName(e.target.value)}
+                    placeholder="Enter new game name"
+                />
+                <button type="submit" className="create-button">
+                    Create
+                </button>
+            </form>
+        </div>
+
+        {/* کارت انتخاب بازی موجود */}
+        <div className="card">
+            <h2>Select Existing Game</h2>
+            {games.length > 0 ? (
+                <div className="list">
+                    {games.map(game => (
+                        <div className="list-item" key={game.id}>
+                            <button onClick={() => handleGameSelect(game.id)} className="select-button">
+                                {game.name} (ID: {game.id})
+                            </button>
+                            <button onClick={() => handleDeleteGame(game.id)} className="delete-button">
+                                Delete
+                            </button>
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                <p>No existing games. Please create a new one.</p>
+            )}
+        </div>
+
+        {/* [کد جدید]: کارت جدید برای لینک به بانک تیم‌ها */}
+        <div className="card">
+            <h2>Manage Team Library</h2>
+            <Link to="/library" className="select-button">
+                Open Library
+            </Link>
+        </div>
+    </div>
+);
 };
 
 export default GameSelector;

@@ -1,0 +1,155 @@
+/* کانتینر اصلی صفحه */
+.library-container {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 20px;
+    font-family: sans-serif;
+    color: #ecf0f1;
+}
+
+.library-container h1,
+.library-container h2 {
+    text-align: center;
+    color: #ffffff;
+    margin-bottom: 20px;
+}
+
+/* کانتینر برای فرم و لیست تیم‌ها */
+.form-container,
+.teams-list-container {
+    background-color: #2c3e50;
+    padding: 25px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* استایل فرم */
+.form-container form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.form-container input[type="text"],
+.form-container input[type="file"] {
+    padding: 12px;
+    border-radius: 5px;
+    border: 1px solid #34495e;
+    background-color: #1a252f;
+    color: #ecf0f1;
+    font-size: 1rem;
+}
+
+.form-container button {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 5px;
+    background-color: #27ae60;
+    color: white;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.form-container button:hover {
+    background-color: #2ecc71;
+}
+
+/* پیام‌های خطا و موفقیت */
+.error-message {
+    color: #e74c3c;
+    text-align: center;
+    margin-top: 10px;
+}
+
+.success-message {
+    color: #2ecc71;
+    text-align: center;
+    margin-top: 10px;
+}
+
+/* لیست تیم‌های موجود */
+.teams-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 10px; /* برای زیبایی اسکرول‌بار */
+}
+
+.team-item {
+    display: flex;
+    align-items: center;
+    background-color: #34495e;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.team-logo-small {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+    margin-right: 15px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+}
+
+.team-item span {
+    font-size: 1.1rem;
+}
+
+/* این کد را به انتهای فایل TeamLibrary.css اضافه کنید */
+
+.team-item-editable {
+    background-color: #34495e;
+    padding: 15px;
+    border-radius: 5px;
+    transition: background-color 0.2s;
+}
+
+.display-mode {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.team-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.action-buttons button {
+    margin-left: 10px;
+    padding: 5px 10px;
+    font-size: 0.8rem;
+}
+
+.delete-button {
+    background-color: #e74c3c;
+}
+.delete-button:hover {
+    background-color: #c0392b;
+}
+
+.edit-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.edit-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.cancel-button {
+    background-color: #7f8c8d;
+}
+.cancel-button:hover {
+    background-color: #95a5a6;
+}
