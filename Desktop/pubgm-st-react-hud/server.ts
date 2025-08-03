@@ -70,20 +70,6 @@ const db = new sqlite3.Database(dbPath, (err) => {
         });
     }
 });
-
-const libraryStorage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    // لوگوها در این پوشه جدید ذخیره می‌شوند
-    const dir = path.join(__dirname, 'library_team_logos/');
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    cb(null, dir);
-  },
-  filename: (req, file, cb) => {
-    cb(null, `${Date.now()}-${file.originalname}`);
-  }
-});
-const uploadLibrary = multer({ storage: libraryStorage });
-
 // ----------------- MIDDLEWARE -----------------
 app.use(cors({ origin: allowedOrigin }));
 app.use(express.json());
@@ -585,7 +571,7 @@ app.post('/api/library/teams/:teamId/update-details', (req: Request, res: Respon
 });
 
 // [جدید]: مسیری برای آپدیت کردن لوگوی تیم در بانک
-app.post('/api/library/teams/:teamId/update-logo', uploadLibrary.single('logo_file'), (req: Request, res: Response) => {
+app.post('/api/library/teams/:teamId/update-logo', upload.single('logo_file'), (req: Request, res: Response) => {
     const { teamId } = req.params;
     const logoFile = req.file;
 
@@ -593,8 +579,10 @@ app.post('/api/library/teams/:teamId/update-logo', uploadLibrary.single('logo_fi
         return res.status(400).json({ error: 'Logo file is required.' });
     }
 
-    const logoPath = `library_team_logos/${logoFile.filename}`;
+    // [اصلاح ۲]: مسیر ذخیره لوگو را به پوشه مشترک تغییر می‌دهیم
+    const logoPath = `team_data/team_logos/${logoFile.filename}`;
     const query = 'UPDATE team_library SET logo_path = ? WHERE id = ?';
+
     db.run(query, [logoPath, teamId], function(err) {
         if (err) return res.status(500).json({ error: 'Failed to update team logo.' });
         res.status(200).json({ message: 'Team logo updated successfully.' });
@@ -640,7 +628,7 @@ app.get('/api/library/teams', (req: Request, res: Response) => {
     });
 });
 
-app.post('/api/library/teams', uploadLibrary.single('logo_file'), (req: Request, res: Response) => {
+app.post('/api/library/teams', upload.single('logo_file'), (req: Request, res: Response) => {
     const { team_name, team_initial } = req.body;
     const logoFile = req.file;
 
@@ -648,12 +636,12 @@ app.post('/api/library/teams', uploadLibrary.single('logo_file'), (req: Request,
         return res.status(400).json({ error: 'Team name, initial, and logo are required.' });
     }
 
-    const logoPath = `library_team_logos/${logoFile.filename}`;
+    // [تغییر کلیدی]: استفاده از مسیر صحیح و مشترک
+    const logoPath = `team_data/team_logos/${logoFile.filename}`;
     const query = 'INSERT INTO team_library (name, initial, logo_path) VALUES (?, ?, ?)';
 
     db.run(query, [team_name, team_initial, logoPath], function (err) {
         if (err) {
-            // خطای UNIQUE برای نام تیم را مدیریت می‌کند
             if (err.message.includes('UNIQUE constraint failed')) {
                 return res.status(409).json({ error: 'A team with this name already exists in the library.' });
             }
