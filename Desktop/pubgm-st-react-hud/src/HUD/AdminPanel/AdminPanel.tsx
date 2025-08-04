@@ -45,7 +45,10 @@ export const AdminPanel: React.FC = () => {
 
         const socket: Socket = io(apiUrl);
         socket.on('connect', () => socket.emit('joinMatch', matchId));
-        socket.on('matchDataUpdated', (updatedData: TeamData[]) => setTeams(updatedData));
+        socket.on('matchDataUpdated', (updatedData: TeamData[]) => {
+            const sortedData = [...updatedData].sort((a, b) => a.id - b.id);
+            setTeams(sortedData);
+        });
         return () => {
             socket.disconnect();
         };

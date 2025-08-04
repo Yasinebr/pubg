@@ -45,7 +45,13 @@ function Table() {
         // [تغییر ۴]: به رویداد جدید و بهینه شده گوش می‌دهیم
         socket.on('matchDataUpdated', (updatedData: Standing[]) => {
             console.log('Table received matchDataUpdated event.');
-            setStandings(updatedData);
+            setStandings(prevStandings => {
+                console.log("TABLE - PREVIOUS state length:", prevStandings.length);
+                console.log("TABLE - INCOMING data length:", updatedData.length);
+                const newState = updatedData; // منطق صحیح جایگزینی است
+                console.log("TABLE - NEW state length:", newState.length);
+                return newState;
+            });
             setIsLoading(false);
         });
 

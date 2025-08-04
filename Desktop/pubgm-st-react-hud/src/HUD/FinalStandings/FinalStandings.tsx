@@ -62,10 +62,6 @@ const FinalStandingsPage: React.FC = () => {
 
     return (
         <div className="table-container-m">
-            {/* حالا این بخش به درستی کار می‌کند */}
-            <h1 className="main-title">
-                {gameDetails ? `${gameDetails.name.toUpperCase()} - FINAL STANDINGS` : 'FINAL STANDINGS'}
-            </h1>
             <div className='table-m'>
                 <div className='table-header-m'>
                     <div className='blank-div column-rank'>#</div>
