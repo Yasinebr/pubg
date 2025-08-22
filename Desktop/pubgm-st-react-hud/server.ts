@@ -222,6 +222,26 @@ app.delete('/api/games/:gameId/matches', (req: Request, res: Response) => {
     });
 });
 
+// server.ts
+app.delete('/api/matches/:matchId', async (req, res) => {
+  const matchId = Number(req.params.matchId);
+  if (!Number.isFinite(matchId)) return res.status(400).json({ message: 'Invalid match id' });
+
+  try {
+    // اگر FKهای وابسته داری و CASCADE نداری، اینجا جدول‌های مرتبط را هم دستی پاک کن.
+    // await db.run('DELETE FROM match_results WHERE match_id = ?', matchId);
+    // await db.run('DELETE FROM match_kills   WHERE match_id = ?', matchId);
+
+    await db.run('DELETE FROM matches WHERE id = ?', matchId); // فقط همین مچ
+    io.emit('matchesUpdated'); // مثل کدت برای همگام‌سازی کلاینت‌ها
+    return res.status(204).send(); // بدون بدنه
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({ message: 'Failed to delete match' });
+  }
+});
+
+
 const getUpdatedOverallStandingsAndEmit = (gameId: string) => {
     const query = `
         SELECT
