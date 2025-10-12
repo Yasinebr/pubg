@@ -1,11 +1,16 @@
 {
   "compilerOptions": {
-    "target": "ES6",
+    /* خروجی مدرن برای Node 22 */
+    "target": "ES2020",
+
+    /* پشتیبانی از کتابخانه‌های مرورگر و Node */
     "lib": [
       "dom",
       "dom.iterable",
       "esnext"
     ],
+
+    /* فعال کردن ویژگی‌های مهم */
     "allowJs": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
@@ -13,16 +18,28 @@
     "strict": true,
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
-    "module": "CommonJS",
-    "moduleResolution": "node",
+
+    /* 🔹 این بخش‌ها مهم‌ترین تغییرات هستند */
+    "module": "ESNext",
+    "moduleResolution": "NodeNext",
     "resolveJsonModule": true,
-    "isolatedModules": true,
-    "noEmit": true,
-    "jsx": "react-jsx",
+
+    /* خروجی در پوشه dist برای فایل‌های سرور */
+    "outDir": "dist",
+
+    /* React */
+    "jsx": "react-jsx"
   },
+
+  /* فایل‌هایی که باید کامپایل شوند */
   "include": [
-    "src", 
+    "src",
     "server.ts",
     "db_setup.ts"
   ],
+
+  /* فایل‌هایی که نباید کامپایل شوند (مثلاً node_modules) */
+  "exclude": [
+    "node_modules"
+  ]
 }
