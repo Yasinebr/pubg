@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import cors from 'cors';
-import express, { Request, Response } from 'express';
+import express from 'express';
+import type { Request, Response } from 'express'; // از type import استفاده کنید
 import path from 'path';
 import multer from 'multer';
 import sqlite3 from 'sqlite3';
