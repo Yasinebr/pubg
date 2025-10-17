@@ -20,8 +20,8 @@
     "noFallthroughCasesInSwitch": true,
 
     /* 🔹 این بخش‌ها مهم‌ترین تغییرات هستند */
-    "module": "ESNext",
-    "moduleResolution": "NodeNext",
+    "module": "CommonJS",
+    "moduleResolution": "node",
     "resolveJsonModule": true,
 
     /* خروجی در پوشه dist برای فایل‌های سرور */
